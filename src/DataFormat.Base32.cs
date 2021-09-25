@@ -42,7 +42,7 @@ namespace Neliva
         /// <returns>
         /// The Base32 representation of the <paramref name="value"/>.
         /// </returns>
-        public static string ToBase32(byte[] value)
+        public static unsafe string ToBase32(ReadOnlySpan<byte> value)
         {
             if (value == null)
             {
@@ -56,41 +56,47 @@ namespace Neliva
                 return string.Empty;
             }
 
+            // bug bug: validate value.LengthRange
             int maxLength = ((length * 8) + 4) / 5;
 
-            return string.Create<byte[]>(maxLength, value, (dest, src) =>
+            fixed (byte* bytesPtr = value)
             {
-                var alphabet = Base32Alphabet;
-
-                int srcLen = src.Length;
-                int buffer = src[0];
-                int count = 0;
-                int next = 1;
-                int bitsLeft = 8;
-
-                while (bitsLeft > 0 || next < srcLen)
+                return string.Create(maxLength, (Ptr: (IntPtr)bytesPtr, value.Length), (dest, args) =>
                 {
-                    if (bitsLeft < 5)
+                    var alphabet = Base32Alphabet;
+
+                    var src = new ReadOnlySpan<byte>((byte*)args.Ptr, args.Length);
+
+                    int srcLen = src.Length;
+                    int buffer = src[0];
+                    int count = 0;
+                    int next = 1;
+                    int bitsLeft = 8;
+
+                    while (bitsLeft > 0 || next < srcLen)
                     {
-                        if (next < srcLen)
+                        if (bitsLeft < 5)
                         {
-                            buffer = (buffer << 8) | (src[next++] & 0xff);
-                            bitsLeft += 8;
+                            if (next < srcLen)
+                            {
+                                buffer = (buffer << 8) | (src[next++] & 0xff);
+                                bitsLeft += 8;
+                            }
+                            else
+                            {
+                                int pad = 5 - bitsLeft;
+                                buffer <<= pad;
+                                bitsLeft += pad;
+                            }
                         }
-                        else
-                        {
-                            int pad = 5 - bitsLeft;
-                            buffer <<= pad;
-                            bitsLeft += pad;
-                        }
+
+                        int index = 0x1f & (buffer >> (bitsLeft - 5));
+                        bitsLeft -= 5;
+
+                        dest[count++] = (char)alphabet[index];
                     }
-
-                    int index = 0x1f & (buffer >> (bitsLeft - 5));
-                    bitsLeft -= 5;
-
-                    dest[count++] = (char)alphabet[index];
-                }
-            });
+                });
+            }
         }
 
         /// <summary>
@@ -104,7 +110,7 @@ namespace Neliva
         /// If the <paramref name="value"/> parameter is an empty string
         /// then a zero length byte array is returned.
         /// </returns>
-        public static byte[] FromBase32(string value)
+        public static byte[] FromBase32(ReadOnlySpan<char> value)
         {
             if (value == null)
             {
@@ -126,6 +132,7 @@ namespace Neliva
                     throw new ArgumentException("Invalid length of Base32 string.", nameof(value));
             }
 
+            // bug bug: validate value.LengthRange
             byte[] output = new byte[length * 5 / 8];
 
             int buffer = 0;
