@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31702.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neliva.DataFormat", "src\Neliva.DataFormat.csproj", "{5292D429-FB8D-4316-A54A-71224F57EBEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neliva.DataFormat.Tests", "tests\Neliva.DataFormat.Tests.csproj", "{7F2198CC-3880-4A13-82E4-AF835910A45F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5292D429-FB8D-4316-A54A-71224F57EBEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5292D429-FB8D-4316-A54A-71224F57EBEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5292D429-FB8D-4316-A54A-71224F57EBEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5292D429-FB8D-4316-A54A-71224F57EBEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F2198CC-3880-4A13-82E4-AF835910A45F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F2198CC-3880-4A13-82E4-AF835910A45F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F2198CC-3880-4A13-82E4-AF835910A45F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F2198CC-3880-4A13-82E4-AF835910A45F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {196EBF47-7DAE-47F3-9510-F046D1EB7ED7}
+	EndGlobalSection
+EndGlobal
