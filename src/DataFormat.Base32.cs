@@ -61,7 +61,7 @@ namespace Neliva
 
             fixed (byte* bytesPtr = value)
             {
-                return string.Create(maxLength, (Ptr: (IntPtr)bytesPtr, value.Length), (dest, args) =>
+                return string.Create(maxLength, (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
                 {
                     var alphabet = Base32Alphabet;
 

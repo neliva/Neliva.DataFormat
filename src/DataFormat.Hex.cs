@@ -58,11 +58,6 @@ namespace Neliva
                 throw new ArgumentNullException(nameof(value));
             }
 
-            if (value.Length > (int.MaxValue / 2))
-            {
-                throw new ArgumentOutOfRangeException(nameof(value));
-            }
-
             int length = value.Length;
 
             if (length == 0)
@@ -70,9 +65,14 @@ namespace Neliva
                 return string.Empty;
             }
 
+            if (length > (int.MaxValue / 2))
+            {
+                throw new ArgumentOutOfRangeException(nameof(value));
+            }
+
             fixed (byte* bytesPtr = value)
             {
-                return string.Create(length << 1, (Ptr: (IntPtr)bytesPtr, value.Length), (dest, args) =>
+                return string.Create(length << 1, (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
                 {
                     var alphabet = HexAlphabet;
 
