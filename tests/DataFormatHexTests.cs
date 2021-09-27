@@ -34,6 +34,14 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
+        public void FromHexEmptyString_Pass()
+        {
+            var actual = DataFormat.FromHex(string.Empty);
+
+            CollectionAssert.AreEqual(new byte[0], actual);
+        }
+
+        [TestMethod]
         public void HexTestPasses()
         {
             var expected = "dd1d91b7d90b2bd3138533ce92b272fbf8a369316aefe242e659cc0ae238afe0";

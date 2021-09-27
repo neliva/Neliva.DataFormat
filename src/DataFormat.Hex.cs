@@ -51,13 +51,8 @@ namespace Neliva
         /// This function does not allocate any extra memory
         /// besides the returned string object.
         /// </remarks>
-        public static string ToHex(byte[] value)
+        public static unsafe string ToHex(ReadOnlySpan<byte> value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             int length = value.Length;
 
             if (length == 0)
@@ -65,19 +60,29 @@ namespace Neliva
                 return string.Empty;
             }
 
-            return string.Create<byte[]>(length << 1, value, (dest, src) =>
+            if (length > (int.MaxValue / 2))
             {
-                var alphabet = HexAlphabet;
+                throw new ArgumentOutOfRangeException(nameof(value));
+            }
 
-                for (int i = 0; i < src.Length; i++)
+            fixed (byte* bytesPtr = value)
+            {
+                return string.Create(length * 2, (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
                 {
-                    int b = src[i];
-                    int c = i << 1;
+                    var alphabet = HexAlphabet;
 
-                    dest[c] = (char)alphabet[b >> 4];
-                    dest[c + 1] = (char)alphabet[b & 0x0F];
-                }
-            });
+                    var src = new ReadOnlySpan<byte>((byte*)args.Ptr, args.Length);
+
+                    for (int i = 0; i < args.Length; i++)
+                    {
+                        int b = src[i];
+                        int c = i << 1;
+
+                        dest[c] = (char)alphabet[b >> 4];
+                        dest[c + 1] = (char)alphabet[b & 0x0F];
+                    }
+                });
+            }
         }
 
         /// <summary>
@@ -107,13 +112,8 @@ namespace Neliva
         /// that are not hexadecimal digits.
         /// </para>
         /// </exception>
-        public static byte[] FromHex(string value)
+        public static byte[] FromHex(ReadOnlySpan<char> value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             int length = value.Length;
 
             if (length == 0)
@@ -158,9 +158,9 @@ namespace Neliva
         /// <remarks>
         /// This method returns <c>true</c> for an empty string.
         /// </remarks>
-        public static bool IsHex(string value)
+        public static bool IsHex(ReadOnlySpan<char> value)
         {
-            if ((value == null) || ((value.Length & 1) != 0))
+            if ((value.Length & 1) != 0)
             {
                 return false;
             }
