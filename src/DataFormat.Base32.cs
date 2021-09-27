@@ -56,12 +56,14 @@ namespace Neliva
                 return string.Empty;
             }
 
-            // bug bug: validate value.LengthRange
-            int maxLength = ((length * 8) + 4) / 5;
+            if (length > (int)(((long)int.MaxValue * 5) / 8))
+            {
+                throw new ArgumentOutOfRangeException(nameof(value));
+            }
 
             fixed (byte* bytesPtr = value)
             {
-                return string.Create(maxLength, (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
+                return string.Create((int)((((long)length * 8) + 4) / 5), (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
                 {
                     var alphabet = Base32Alphabet;
 
@@ -132,8 +134,7 @@ namespace Neliva
                     throw new ArgumentException("Invalid length of Base32 string.", nameof(value));
             }
 
-            // bug bug: validate value.LengthRange
-            byte[] output = new byte[length * 5 / 8];
+            byte[] output = new byte[((long)length * 5) / 8];
 
             int buffer = 0;
             int bitsLeft = 0;
