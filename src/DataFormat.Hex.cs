@@ -53,11 +53,6 @@ namespace Neliva
         /// </remarks>
         public static unsafe string ToHex(ReadOnlySpan<byte> value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             int length = value.Length;
 
             if (length == 0)
@@ -119,11 +114,6 @@ namespace Neliva
         /// </exception>
         public static byte[] FromHex(ReadOnlySpan<char> value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             int length = value.Length;
 
             if (length == 0)
@@ -170,7 +160,7 @@ namespace Neliva
         /// </remarks>
         public static bool IsHex(ReadOnlySpan<char> value)
         {
-            if ((value == null) || ((value.Length & 1) != 0))
+            if ((value.Length & 1) != 0)
             {
                 return false;
             }

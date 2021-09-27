@@ -44,11 +44,6 @@ namespace Neliva
         /// </returns>
         public static unsafe string ToBase32(ReadOnlySpan<byte> value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             int length = value.Length;
 
             if (length == 0)
@@ -114,11 +109,6 @@ namespace Neliva
         /// </returns>
         public static byte[] FromBase32(ReadOnlySpan<char> value)
         {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
             int length = value.Length;
 
             if (length == 0)
