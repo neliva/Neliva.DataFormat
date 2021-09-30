@@ -144,6 +144,7 @@ namespace Neliva
             return output;
         }
 
+        /*
         /// <summary>
         /// Verifies if the provided <paramref name="value"/> is
         /// a valid hexadecimal string.
@@ -178,5 +179,6 @@ namespace Neliva
 
             return true;
         }
+        */
     }
 }
