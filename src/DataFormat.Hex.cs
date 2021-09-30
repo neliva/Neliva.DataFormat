@@ -34,18 +34,17 @@ namespace Neliva
         };
 
         /// <summary>
-        /// Converts a byte array to a hexadecimal representation.
+        /// Converts the span <paramref name="value"/> to lowercase hex representation.
         /// </summary>
         /// <param name="value">
-        /// The byte array to convert.
+        /// The span to convert.
         /// </param>
         /// <returns>
-        /// The hexadecimal representation of the provided byte array.
-        /// If the <paramref name="value"/> parameter has no elements
-        /// then an empty string is returned.
+        /// The string representation in hex of the provided span <paramref name="value"/>.
+        /// If the <paramref name="value"/> span is empty then an empty string is returned.
         /// </returns>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <c>null</c>.
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="value"/> is too large to be encoded.
         /// </exception>
         public static unsafe string ToHex(ReadOnlySpan<byte> value)
         {
@@ -82,30 +81,25 @@ namespace Neliva
         }
 
         /// <summary>
-        /// Converts a hexadecimal string to a byte array representation.
+        /// Converts the hex encoded span to a byte array representation.
         /// </summary>
         /// <param name="value">
-        /// The string to convert.
+        /// The span to convert.
         /// </param>
         /// <returns>
-        /// The byte array representation of the provided hexadecimal string.
-        /// If the <paramref name="value"/> parameter is an empty string
+        /// The byte array representation of the provided hex span <paramref name="value"/>.
+        /// If the <paramref name="value"/> span is empty
         /// then a zero length byte array is returned.
         /// </returns>
-        /// <exception cref="ArgumentNullException">
-        /// <paramref name="value"/> is <c>null</c>.
-        /// </exception>
         /// <exception cref="FormatException">
         /// <para>
-        /// The <paramref name="value"/> parameter does not contain
-        /// an even number of characters.
+        /// The length of <paramref name="value"/> is not a multiple of 2.
         /// </para>
         /// <para>
         /// OR
         /// </para>
         /// <para>
-        /// The <paramref name="value"/> parameter contains characters
-        /// that are not hexadecimal digits.
+        /// The <paramref name="value"/> contains a non-hex character.
         /// </para>
         /// </exception>
         public static byte[] FromHex(ReadOnlySpan<char> value)
@@ -139,42 +133,5 @@ namespace Neliva
 
             return output;
         }
-
-        /*
-        /// <summary>
-        /// Verifies if the provided <paramref name="value"/> is
-        /// a valid hexadecimal string.
-        /// </summary>
-        /// <param name="value">
-        /// The string to verify.
-        /// </param>
-        /// <returns>
-        /// <c>true</c> if the <paramref name="value"/> is not <c>null</c> and
-        /// has an even number of hexadecimal digits; otherwise, <c>false</c>.
-        /// </returns>
-        /// <remarks>
-        /// This method returns <c>true</c> for an empty string.
-        /// </remarks>
-        public static bool IsHex(ReadOnlySpan<char> value)
-        {
-            if ((value.Length & 1) != 0)
-            {
-                return false;
-            }
-
-            for (int i = 0; i < value.Length; i += 2)
-            {
-                int c1 = value[i];
-                int c2 = value[i + 1];
-
-                if ((c1 >= MC) || (HexMap[c1] >= MC) || (c2 >= MC) || (HexMap[c2] >= MC))
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-        */
     }
 }
