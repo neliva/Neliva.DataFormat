@@ -10,7 +10,7 @@ namespace Neliva.Tests
     public class DataFormatBase32Tests
     {
         [TestMethod]
-        public void RoundTrip_Pass()
+        public void RoundTripPass()
         {
             byte[] original = new byte[byte.MaxValue * 2 + 8];
 
@@ -35,7 +35,7 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void FromBase32EmptyString_Pass()
+        public void FromBase32EmptyStringPass()
         {
             var actual = DataFormat.FromBase32(string.Empty);
 
@@ -43,7 +43,7 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void FromBase32NullString_Pass()
+        public void FromBase32NullStringPass()
         {
             var actual = DataFormat.FromBase32(null);
 
@@ -51,7 +51,7 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void ToBase32EmptyArray_Pass()
+        public void ToBase32EmptyArrayPass()
         {
             var actual = DataFormat.ToBase32(Array.Empty<byte>());
 
@@ -59,11 +59,31 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void ToBase32NullArray_Pass()
+        public void ToBase32NullArrayPass()
         {
             var actual = DataFormat.ToBase32(null);
 
             Assert.AreEqual(string.Empty, actual);
+        }
+
+        // DSJPRTBPC4
+        [TestMethod]
+        public void FromBase32InvalidInputLengthFail()
+        {
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("D"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("DSJ"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("DSJPRT"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("DSJPRTBPC"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("DSJPRTBPC40"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
         }
     }
 }

@@ -2,6 +2,7 @@
 // See the UNLICENSE file in the project root for more information.
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 
 namespace Neliva.Tests
 {
@@ -9,7 +10,7 @@ namespace Neliva.Tests
     public class DataFormatHexTests
     {
         [TestMethod]
-        public void RoundTrip_Pass()
+        public void RoundTripPass()
         {
             byte[] original = new byte[byte.MaxValue * 2 + 8];
 
@@ -34,7 +35,7 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void FromHexEmptyString_Pass()
+        public void FromHexEmptyStringPass()
         {
             var actual = DataFormat.FromHex(string.Empty);
 
@@ -42,14 +43,44 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void HexTestPasses()
+        public void FromHexNullStringPass()
         {
-            var expected = "dd1d91b7d90b2bd3138533ce92b272fbf8a369316aefe242e659cc0ae238afe0";
+            var actual = DataFormat.FromHex(null);
 
-            var value = DataFormat.FromHex(expected);
-            var actual = DataFormat.ToHex(value);
+            CollectionAssert.AreEqual(new byte[0], actual);
+        }
 
-            Assert.AreEqual(expected, actual);
+        [TestMethod]
+        public void ToHexEmptyArrayPass()
+        {
+            var actual = DataFormat.ToHex(Array.Empty<byte>());
+
+            Assert.AreEqual(string.Empty, actual);
+        }
+
+        [TestMethod]
+        public void ToHexNullArrayPass()
+        {
+            var actual = DataFormat.ToHex(null);
+
+            Assert.AreEqual(string.Empty, actual);
+        }
+
+        // 6e656c697661
+        [TestMethod]
+        public void FromHexInvalidInputLengthFail()
+        {
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6"));
+            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6e6"));
+            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6e656"));
+            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6e656c69766"));
+            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
         }
     }
 }

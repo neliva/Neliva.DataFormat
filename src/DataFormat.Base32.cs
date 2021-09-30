@@ -8,18 +8,7 @@ namespace Neliva
     public static partial class DataFormat
     {
         /// <summary>
-        /// The Base32 alphabet.
-        /// </summary>
-        private static byte[] Base32Alphabet = new byte[]
-        {
-            0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,  // 01234567
-            0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,  // 89abcdef
-            0x67, 0x68, 0x6a, 0x6b, 0x6d, 0x6e, 0x70, 0x71,  // ghjkmnpq
-            0x72, 0x73, 0x74, 0x76, 0x77, 0x78, 0x79, 0x7a,  // rstvwxyz
-        };
-
-        /// <summary>
-        /// The map to decode bytes from Base32 <c>0123456789abcdefghjkmnpqrstvwxyz</c> characters.
+        /// The map to decode bytes from base32 <c>0123456789abcdefghjkmnpqrstvwxyz</c> characters.
         /// </summary>
         private static byte[] Base32Map = new byte[MC]
         {
@@ -34,14 +23,19 @@ namespace Neliva
         };
 
         /// <summary>
-        /// Convert the provided <paramref name="value"/> to
-        /// Base32 representation.
+        /// Converts the span <paramref name="value"/> to lowercase base32 representation
+        /// using <c>0123456789abcdefghjkmnpqrstvwxyz</c> alphabet.
         /// </summary>
         /// <param name="value">
-        /// The value to convert to Base32 representation.</param>
+        /// The span to convert.
+        /// </param>
         /// <returns>
-        /// The Base32 representation of the <paramref name="value"/>.
+        /// The string representation in base32 of the provided span <paramref name="value"/>.
+        /// If the <paramref name="value"/> span is empty then an empty string is returned.
         /// </returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// <paramref name="value"/> is too large to be encoded.
+        /// </exception>
         public static unsafe string ToBase32(ReadOnlySpan<byte> value)
         {
             int length = value.Length;
@@ -53,14 +47,14 @@ namespace Neliva
 
             if (length > (int)(((long)int.MaxValue * 5) / 8))
             {
-                throw new ArgumentOutOfRangeException(nameof(value));
+                throw new ArgumentOutOfRangeException(nameof(value), "Input is too large to be processed.");
             }
 
             fixed (byte* bytesPtr = value)
             {
                 return string.Create((int)((((long)length * 8) + 4) / 5), (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
                 {
-                    var alphabet = Base32Alphabet;
+                    var alphabet = HexAndBase32Alphabet;
 
                     var src = new ReadOnlySpan<byte>((byte*)args.Ptr, args.Length);
 
@@ -90,23 +84,34 @@ namespace Neliva
                         int index = 0x1f & (buffer >> (bitsLeft - 5));
                         bitsLeft -= 5;
 
-                        dest[count++] = (char)alphabet[index];
+                        dest[count++] = alphabet[index];
                     }
                 });
             }
         }
 
         /// <summary>
-        /// Convert the provided <paramref name="value"/> from
-        /// Base32 representation.
+        /// Converts the base32 encoded span to a byte array representation.
         /// </summary>
         /// <param name="value">
-        /// The value to convert from Base32 representation.</param>
+        /// The span to convert.
+        /// </param>
         /// <returns>
-        /// The byte array representation of the provided Base32 <paramref name="value"/>.
-        /// If the <paramref name="value"/> parameter is an empty string
+        /// The byte array representation of the provided base32 span <paramref name="value"/>.
+        /// If the <paramref name="value"/> span is empty
         /// then a zero length byte array is returned.
         /// </returns>
+        /// <exception cref="FormatException">
+        /// <para>
+        /// The length of <paramref name="value"/> is not correct.
+        /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains a non-base32 character.
+        /// </para>
+        /// </exception>
         public static byte[] FromBase32(ReadOnlySpan<char> value)
         {
             int length = value.Length;
@@ -121,7 +126,7 @@ namespace Neliva
                 case 1:
                 case 3:
                 case 6:
-                    throw new ArgumentException("Invalid length of Base32 string.", nameof(value));
+                    throw new FormatException("The input is not a valid base32 string as its length is not correct.");
             }
 
             byte[] output = new byte[((long)length * 5) / 8];
@@ -136,7 +141,7 @@ namespace Neliva
 
                 if (ch >= MC || ((ch = Base32Map[ch]) >= MC))
                 {
-                    throw new ArgumentException("Base32 string has invalid chars.", nameof(value));
+                    throw new FormatException("The input is not a valid base32 string as it contains a non-base32 character.");
                 }
 
                 buffer = (buffer << 5) | ch;
