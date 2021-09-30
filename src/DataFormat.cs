@@ -10,7 +10,7 @@ namespace Neliva
     {
         /// <summary>
         /// Represents the max number of elements in a map table
-        /// and an invalid character in the map table.
+        /// and an invalid character in a map table.
         /// </summary>
         private const int MC = 128;
 

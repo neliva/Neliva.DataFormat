@@ -66,5 +66,21 @@ namespace Neliva.Tests
             Assert.AreEqual(string.Empty, actual);
         }
 
+        // 6e656c697661
+        [TestMethod]
+        public void FromHexInvalidInputLengthFail()
+        {
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6"));
+            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6e6"));
+            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6e656"));
+            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6e656c69766"));
+            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+        }
     }
 }

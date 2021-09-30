@@ -65,5 +65,25 @@ namespace Neliva.Tests
 
             Assert.AreEqual(string.Empty, actual);
         }
+
+        // DSJPRTBPC4
+        [TestMethod]
+        public void FromBase32InvalidInputLengthFail()
+        {
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("D"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("DSJ"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("DSJPRT"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("DSJPRTBPC"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+
+            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32("DSJPRTBPC40"));
+            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+        }
     }
 }
