@@ -8,21 +8,10 @@ namespace Neliva
     public static partial class DataFormat
     {
         /// <summary>
-        /// The hex alphabet 0-9 and a-f.
-        /// </summary>
-        private static byte[] HexAlphabet = new byte[16]
-        {
-            //
-            // https://datatracker.ietf.org/doc/html/rfc4648
-            //
-            0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,  // 01234567
-            0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,  // 89abcdef
-        };
-
-        /// <summary>
         /// The map to decode bytes from hex characters.
         /// </summary>
-        private static byte[] HexMap = new byte[MC] {
+        private static byte[] HexMap = new byte[MC]
+        {
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
@@ -64,7 +53,7 @@ namespace Neliva
             {
                 return string.Create(length * 2, (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
                 {
-                    var alphabet = HexAlphabet;
+                    var alphabet = HexAndBase32Alphabet;
 
                     var src = new ReadOnlySpan<byte>((byte*)args.Ptr, args.Length);
 
@@ -73,8 +62,8 @@ namespace Neliva
                         int b = src[i];
                         int c = i << 1;
 
-                        dest[c] = (char)alphabet[b >> 4];
-                        dest[c + 1] = (char)alphabet[b & 0x0F];
+                        dest[c] = alphabet[b >> 4];
+                        dest[c + 1] = alphabet[b & 0x0F];
                     }
                 });
             }
