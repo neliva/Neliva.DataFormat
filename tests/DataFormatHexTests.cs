@@ -2,6 +2,7 @@
 // See the UNLICENSE file in the project root for more information.
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 
 namespace Neliva.Tests
 {
@@ -42,14 +43,28 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void HexTestPasses()
+        public void FromHexNullString_Pass()
         {
-            var expected = "dd1d91b7d90b2bd3138533ce92b272fbf8a369316aefe242e659cc0ae238afe0";
+            var actual = DataFormat.FromHex(null);
 
-            var value = DataFormat.FromHex(expected);
-            var actual = DataFormat.ToHex(value);
-
-            Assert.AreEqual(expected, actual);
+            CollectionAssert.AreEqual(new byte[0], actual);
         }
+
+        [TestMethod]
+        public void ToHexEmptyArray_Pass()
+        {
+            var actual = DataFormat.ToHex(Array.Empty<byte>());
+
+            Assert.AreEqual(string.Empty, actual);
+        }
+
+        [TestMethod]
+        public void ToHexNullArray_Pass()
+        {
+            var actual = DataFormat.ToHex(null);
+
+            Assert.AreEqual(string.Empty, actual);
+        }
+
     }
 }
