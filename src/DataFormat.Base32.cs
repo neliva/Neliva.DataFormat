@@ -53,7 +53,7 @@ namespace Neliva
 
             if (length > (int)(((long)int.MaxValue * 5) / 8))
             {
-                throw new ArgumentOutOfRangeException(nameof(value));
+                throw new ArgumentOutOfRangeException(nameof(value), "Input is too large to be processed.");
             }
 
             fixed (byte* bytesPtr = value)
@@ -121,7 +121,7 @@ namespace Neliva
                 case 1:
                 case 3:
                 case 6:
-                    throw new ArgumentException("Invalid length of Base32 string.", nameof(value));
+                    throw new FormatException("The input is not a valid Base32 string as its length is not correct.");
             }
 
             byte[] output = new byte[((long)length * 5) / 8];
@@ -136,7 +136,7 @@ namespace Neliva
 
                 if (ch >= MC || ((ch = Base32Map[ch]) >= MC))
                 {
-                    throw new ArgumentException("Base32 string has invalid chars.", nameof(value));
+                    throw new FormatException("The input is not a valid Base32 string as it contains a non-Base32 character.");
                 }
 
                 buffer = (buffer << 5) | ch;

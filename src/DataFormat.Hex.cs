@@ -47,10 +47,6 @@ namespace Neliva
         /// <exception cref="ArgumentNullException">
         /// <paramref name="value"/> is <c>null</c>.
         /// </exception>
-        /// <remarks>
-        /// This function does not allocate any extra memory
-        /// besides the returned string object.
-        /// </remarks>
         public static unsafe string ToHex(ReadOnlySpan<byte> value)
         {
             int length = value.Length;
@@ -62,7 +58,7 @@ namespace Neliva
 
             if (length > (int.MaxValue / 2))
             {
-                throw new ArgumentOutOfRangeException(nameof(value));
+                throw new ArgumentOutOfRangeException(nameof(value), "Input is too large to be processed.");
             }
 
             fixed (byte* bytesPtr = value)
@@ -99,7 +95,7 @@ namespace Neliva
         /// <exception cref="ArgumentNullException">
         /// <paramref name="value"/> is <c>null</c>.
         /// </exception>
-        /// <exception cref="ArgumentException">
+        /// <exception cref="FormatException">
         /// <para>
         /// The <paramref name="value"/> parameter does not contain
         /// an even number of characters.
@@ -123,7 +119,7 @@ namespace Neliva
 
             if ((length & 1) != 0)
             {
-                throw new ArgumentException("Odd length of hex string.", nameof(value));
+                throw new FormatException("The input is not a valid hex string as its length is not a multiple of 2.");
             }
 
             byte[] output = new byte[length / 2];
@@ -135,7 +131,7 @@ namespace Neliva
 
                 if ((c1 >= MC) || ((c1 = HexMap[c1]) >= MC) || (c2 >= MC) || ((c2 = HexMap[c2]) >= MC))
                 {
-                    throw new ArgumentException("Hex string has invalid chars.", nameof(value));
+                    throw new FormatException("The input is not a valid hex string as it contains a non-hex character.");
                 }
 
                 output[i >> 1] = (byte)((c1 << 4) | c2);

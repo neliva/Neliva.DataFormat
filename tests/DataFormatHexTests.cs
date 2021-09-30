@@ -10,7 +10,7 @@ namespace Neliva.Tests
     public class DataFormatHexTests
     {
         [TestMethod]
-        public void RoundTrip_Pass()
+        public void RoundTripPass()
         {
             byte[] original = new byte[byte.MaxValue * 2 + 8];
 
@@ -35,7 +35,7 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void FromHexEmptyString_Pass()
+        public void FromHexEmptyStringPass()
         {
             var actual = DataFormat.FromHex(string.Empty);
 
@@ -43,7 +43,7 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void FromHexNullString_Pass()
+        public void FromHexNullStringPass()
         {
             var actual = DataFormat.FromHex(null);
 
@@ -51,7 +51,7 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void ToHexEmptyArray_Pass()
+        public void ToHexEmptyArrayPass()
         {
             var actual = DataFormat.ToHex(Array.Empty<byte>());
 
@@ -59,7 +59,7 @@ namespace Neliva.Tests
         }
 
         [TestMethod]
-        public void ToHexNullArray_Pass()
+        public void ToHexNullArrayPass()
         {
             var actual = DataFormat.ToHex(null);
 
