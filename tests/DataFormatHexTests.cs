@@ -1,37 +1,54 @@
 // This is free and unencumbered software released into the public domain.
 // See the UNLICENSE file in the project root for more information.
 
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Neliva.Tests
 {
+    [ExcludeFromCodeCoverage]
     [TestClass]
     public class DataFormatHexTests
     {
         [TestMethod]
-        public void RoundTripPass()
+        public void FullRangeRoundTripPass()
         {
-            byte[] original = new byte[byte.MaxValue * 2 + 8];
+            string hexStrLower =
+                "000102030405060708090a0b0c0d0e0f" + 
+                "101112131415161718191a1b1c1d1e1f" +
+                "202122232425262728292a2b2c2d2e2f" +
+                "303132333435363738393a3b3c3d3e3f" +
+                "404142434445464748494a4b4c4d4e4f" +
+                "505152535455565758595a5b5c5d5e5f" +
+                "606162636465666768696a6b6c6d6e6f" +
+                "707172737475767778797a7b7c7d7e7f" +
+                "808182838485868788898a8b8c8d8e8f" +
+                "909192939495969798999a9b9c9d9e9f" +
+                "a0a1a2a3a4a5a6a7a8a9aaabacadaeaf" +
+                "b0b1b2b3b4b5b6b7b8b9babbbcbdbebf" +
+                "c0c1c2c3c4c5c6c7c8c9cacbcccdcecf" +
+                "d0d1d2d3d4d5d6d7d8d9dadbdcdddedf" +
+                "e0e1e2e3e4e5e6e7e8e9eaebecedeeef" +
+                "f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff";
 
-            byte val = 0;
+            string hexStrUpper = hexStrLower.ToUpperInvariant();
 
-            for (int i = 0; i < original.Length; i++)
+            var hexLower = DataFormat.FromHex(hexStrLower);
+            var hexUpper = DataFormat.FromHex(hexStrUpper);
+
+            Assert.AreEqual(256, hexLower.Length);
+            Assert.AreEqual(256, hexUpper.Length);
+
+            for (int i = 0; i < 256; i++)
             {
-                original[i] = val;
-
-                val++;
+                Assert.AreEqual(i, hexLower[i], "lower");
+                Assert.AreEqual(i, hexUpper[i], "upper");
             }
 
-            string hex = DataFormat.ToHex((byte[])original.Clone());
+            string hexResut = DataFormat.ToHex(hexLower);
 
-            byte[] result = DataFormat.FromHex(hex);
-
-            CollectionAssert.AreEqual(original, result, "Roundtrip values don't match.");
-
-            byte[] resultUpper = DataFormat.FromHex(hex.ToUpperInvariant());
-
-            CollectionAssert.AreEqual(original, resultUpper, "Roundtrip values don't match (Upper).");
+            Assert.AreEqual(hexStrLower, hexResut);
         }
 
         [TestMethod]
@@ -39,7 +56,7 @@ namespace Neliva.Tests
         {
             var actual = DataFormat.FromHex(string.Empty);
 
-            CollectionAssert.AreEqual(new byte[0], actual);
+            Assert.AreEqual(Array.Empty<byte>(), actual);
         }
 
         [TestMethod]
@@ -47,7 +64,7 @@ namespace Neliva.Tests
         {
             var actual = DataFormat.FromHex(null);
 
-            CollectionAssert.AreEqual(new byte[0], actual);
+            Assert.AreEqual(Array.Empty<byte>(), actual);
         }
 
         [TestMethod]
@@ -66,21 +83,51 @@ namespace Neliva.Tests
             Assert.AreEqual(string.Empty, actual);
         }
 
-        // 6e656c697661
+        // 6E656C697661
         [TestMethod]
-        public void FromHexInvalidInputLengthFail()
+        [DataRow("6")]
+        [DataRow("6E6")]
+        [DataRow("6E656")]
+        [DataRow("6E656C69766")]
+        public void FromHexInvalidInputLengthFail(string invalidLengthHex)
         {
-            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6"));
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex(invalidLengthHex));
             Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+        }
 
-            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6e6"));
-            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+        // Uppercase
+        [TestMethod]
+        [DataRow("  6E656C697661")]
+        [DataRow("6E656C697661  ")]
+        [DataRow("6E-656C69-7661")]
+        [DataRow("6E656C697661\u0061\u0300")]
+        [DataRow("\u0061\u03006E656C697661")]
+        [DataRow("\u200b6E656C6976611")]
+        [DataRow("0X")]
+        [DataRow("0\u0308")]
+        [DataRow("N0")]
+        // Lowercase
+        [DataRow("  6e656c697661")]
+        [DataRow("6e656c697661  ")]
+        [DataRow("6e-656c69-7661")]
+        [DataRow("6e656c697661\u0061\u0300")]
+        [DataRow("\u0061\u03006e656c697661")]
+        [DataRow("\u200b6e656c6976611")]
+        [DataRow("0x")]
+        [DataRow("0\u0308")]
+        [DataRow("n0")]
+        public void FromHexInvalidInputCharFail(string invalidCharInHex)
+        {
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex(invalidCharInHex));
+            Assert.AreEqual("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
+        }
 
-            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6e656"));
-            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
-
-            ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex("6e656c69766"));
-            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+        [TestMethod]
+        [DataRow(int.MaxValue)]
+        [DataRow(int.MaxValue / 2 + 1)]
+        public unsafe void ToHexInputTooLargeFail(int inputSize)
+        {
+            var ex = Assert.ThrowsException<ArgumentOutOfRangeException>(() => DataFormat.ToHex(new ReadOnlySpan<byte>((void*)0, inputSize)));
         }
     }
 }
