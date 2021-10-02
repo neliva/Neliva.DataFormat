@@ -15,14 +15,14 @@ namespace Neliva
         private const int MC = 128;
 
         /// <summary>
-        /// The Base32 alphabet.
+        /// The base32 alphabet.
         /// </summary>
         private static char[] HexAndBase32Alphabet = new char[]
         {
-            '0', '1', '2', '3', '4', '5', '6', '7',  //  Base32 + Hex
-            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',  //  Base32 + Hex
-            'g', 'h', 'j', 'k', 'm', 'n', 'p', 'q',  //  Base32
-            'r', 's', 't', 'v', 'w', 'x', 'y', 'z',  //  Base32
+            '0', '1', '2', '3', '4', '5', '6', '7',  //  base32 + hex
+            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',  //  base32 + hex
+            'g', 'h', 'j', 'k', 'm', 'n', 'p', 'q',  //  base32
+            'r', 's', 't', 'v', 'w', 'x', 'y', 'z',  //  base32
         };
     }
 }
