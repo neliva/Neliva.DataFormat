@@ -10,7 +10,7 @@ This repository provides support to encode and decode data in hex and base32.
 
 Encoder uses lowercase alphabet suitable for **naming files and cloud objects**. Decoder understands lower and uppercase characters.
 
-The custom base32 utilizes `0123456789abcdefghjkmnpqrstvwxyz` alphabet that ommits the `I L O U` letters.
+The custom base32 utilizes `0123456789abcdefghjkmnpqrstvwxyz` alphabet that omits the `I L O U` letters.
 
 ### Usage
 ```C#
