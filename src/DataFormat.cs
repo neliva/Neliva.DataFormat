@@ -1,4 +1,4 @@
-﻿// This is free and unencumbered software released into the public domain.
+// This is free and unencumbered software released into the public domain.
 // See the UNLICENSE file in the project root for more information.
 
 namespace Neliva
@@ -15,7 +15,7 @@ namespace Neliva
         private const int MC = 128;
 
         /// <summary>
-        /// The base32 alphabet.
+        /// The base32 and hex alphabet.
         /// </summary>
         private static char[] HexAndBase32Alphabet = new char[]
         {
