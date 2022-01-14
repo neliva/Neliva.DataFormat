@@ -10,7 +10,7 @@ namespace Neliva
         /// <summary>
         /// The map to decode bytes from hex characters.
         /// </summary>
-        private static byte[] HexMap = new byte[MC]
+        private static ReadOnlySpan<byte> HexMap => new byte[MC]
         {
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
@@ -53,8 +53,6 @@ namespace Neliva
             {
                 return string.Create(length * 2, (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
                 {
-                    var alphabet = HexAndBase32Alphabet;
-
                     var src = new ReadOnlySpan<byte>((byte*)args.Ptr, args.Length);
 
                     for (int i = 0; i < args.Length; i++)
@@ -62,8 +60,8 @@ namespace Neliva
                         int b = src[i];
                         int c = i << 1;
 
-                        dest[c] = alphabet[b >> 4];
-                        dest[c + 1] = alphabet[b & 0x0F];
+                        dest[c] = (char)HexAndBase32Alphabet[b >> 4];
+                        dest[c + 1] = (char)HexAndBase32Alphabet[b & 0x0F];
                     }
                 });
             }
@@ -105,7 +103,7 @@ namespace Neliva
                 throw new FormatException("The input is not a valid hex string as its length is not a multiple of 2.");
             }
 
-            byte[] output = new byte[length / 2];
+            byte[] output = GC.AllocateUninitializedArray<byte>(length / 2);
 
             for (int i = 0; i < value.Length; i += 2)
             {

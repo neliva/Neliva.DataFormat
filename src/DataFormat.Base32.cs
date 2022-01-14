@@ -10,7 +10,7 @@ namespace Neliva
         /// <summary>
         /// The map to decode bytes from base32 <c>0123456789abcdefghjkmnpqrstvwxyz</c> characters.
         /// </summary>
-        private static byte[] Base32Map = new byte[MC]
+        private static ReadOnlySpan<byte> Base32Map => new byte[MC]
         {
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
@@ -54,8 +54,6 @@ namespace Neliva
             {
                 return string.Create((int)((((long)length * 8) + 4) / 5), (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
                 {
-                    var alphabet = HexAndBase32Alphabet;
-
                     var src = new ReadOnlySpan<byte>((byte*)args.Ptr, args.Length);
 
                     int srcLen = src.Length;
@@ -84,7 +82,7 @@ namespace Neliva
                         int index = 0x1f & (buffer >> (bitsLeft - 5));
                         bitsLeft -= 5;
 
-                        dest[count++] = alphabet[index];
+                        dest[count++] = (char)HexAndBase32Alphabet[index];
                     }
                 });
             }
@@ -129,7 +127,7 @@ namespace Neliva
                     throw new FormatException("The input is not a valid base32 string as its length is not correct.");
             }
 
-            byte[] output = new byte[((long)length * 5) / 8];
+            byte[] output = GC.AllocateUninitializedArray<byte>((int)((long)length * 5 / 8));
 
             int buffer = 0;
             int bitsLeft = 0;
