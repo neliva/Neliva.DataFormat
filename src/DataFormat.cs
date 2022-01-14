@@ -1,6 +1,8 @@
 // This is free and unencumbered software released into the public domain.
 // See the UNLICENSE file in the project root for more information.
 
+using System;
+
 namespace Neliva
 {
     /// <summary>
@@ -17,12 +19,12 @@ namespace Neliva
         /// <summary>
         /// The base32 and hex alphabet.
         /// </summary>
-        private static char[] HexAndBase32Alphabet = new char[]
+        private static ReadOnlySpan<byte> HexAndBase32Alphabet => new byte[]
         {
-            '0', '1', '2', '3', '4', '5', '6', '7',  //  base32 + hex
-            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',  //  base32 + hex
-            'g', 'h', 'j', 'k', 'm', 'n', 'p', 'q',  //  base32
-            'r', 's', 't', 'v', 'w', 'x', 'y', 'z',  //  base32
+            (byte)'0', (byte)'1', (byte)'2', (byte)'3', (byte)'4', (byte)'5', (byte)'6', (byte)'7',  //  base32 + hex
+            (byte)'8', (byte)'9', (byte)'a', (byte)'b', (byte)'c', (byte)'d', (byte)'e', (byte)'f',  //  base32 + hex
+            (byte)'g', (byte)'h', (byte)'j', (byte)'k', (byte)'m', (byte)'n', (byte)'p', (byte)'q',  //  base32
+            (byte)'r', (byte)'s', (byte)'t', (byte)'v', (byte)'w', (byte)'x', (byte)'y', (byte)'z',  //  base32
         };
     }
 }
