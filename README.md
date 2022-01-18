@@ -1,6 +1,6 @@
 ## Neliva.DataFormat
 
-This repository provides support to encode and decode data in hex and base32.
+This repository provides support to efficiently encode and decode data in hex and base32.
 
 [![master](https://github.com/neliva/Neliva.DataFormat/workflows/main/badge.svg)](https://github.com/neliva/Neliva.DataFormat/actions?query=workflow%3Amain)
 [![netstandard 2.1](https://img.shields.io/badge/dotnet-6.0-green)](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
@@ -10,7 +10,7 @@ This repository provides support to encode and decode data in hex and base32.
 
 Encoder uses lowercase alphabet suitable for **naming files and cloud objects**. Decoder understands lower and uppercase characters.
 
-The custom base32 utilizes `0123456789abcdefghjkmnpqrstvwxyz` alphabet that omits the `I L O U` letters.
+The custom base32 utilizes the `0123456789abcdefghjkmnpqrstvwxyz` alphabet that omits the `I L O U` letters.
 
 ### Usage
 ```C#
