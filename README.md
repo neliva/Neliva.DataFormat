@@ -3,7 +3,7 @@
 This repository provides support to encode and decode data in hex and base32.
 
 [![master](https://github.com/neliva/Neliva.DataFormat/workflows/main/badge.svg)](https://github.com/neliva/Neliva.DataFormat/actions?query=workflow%3Amain)
-[![netstandard 2.1](https://img.shields.io/badge/netstandard-2.1-green)](https://docs.microsoft.com/en-us/dotnet/standard/net-standard)
+[![netstandard 2.1](https://img.shields.io/badge/dotnet-6.0-green)](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 [![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Neliva.DataFormat)](https://www.nuget.org/packages/Neliva.DataFormat)
 
 ## Overview
