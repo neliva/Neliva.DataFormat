@@ -105,6 +105,13 @@ namespace Neliva
 
             byte[] output = GC.AllocateUninitializedArray<byte>(length / 2);
 
+            FromHex(value, output);
+
+            return output;
+        }
+
+        private static void FromHex(ReadOnlySpan<char> value, Span<byte> destination)
+        {
             for (int i = 0; i < value.Length; i += 2)
             {
                 int c1 = value[i];
@@ -115,10 +122,61 @@ namespace Neliva
                     throw new FormatException("The input is not a valid hex string as it contains a non-hex character.");
                 }
 
-                output[i >> 1] = (byte)((c1 << 4) | c2);
+                destination[i >> 1] = (byte)((c1 << 4) | c2);
+            }
+        }
+
+        /// <summary>
+        /// Converts the <paramref name="value"/> to lowercase hex representation.
+        /// </summary>
+        /// <param name="value">
+        /// The <see cref="Guid"/> to convert.
+        /// </param>
+        /// <returns>
+        /// The string representation in hex of the provided <paramref name="value"/>.
+        /// The length of the returned string is 32 characters.
+        /// </returns>
+        public static string ToHexGuid(Guid value)
+        {
+            Span<byte> guidBytes = stackalloc byte[16];
+
+            WriteGuidBigEndian(value, guidBytes);
+
+            return ToHex(guidBytes);
+        }
+
+        /// <summary>
+        /// Converts the hex encoded <paramref name="value"/> to a <see cref="Guid"/> structure.
+        /// </summary>
+        /// <param name="value">
+        /// The value to convert.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Guid"/> representation of the provided hex span <paramref name="value"/>.
+        /// </returns>
+        /// <exception cref="FormatException">
+        /// <para>
+        /// The length of <paramref name="value"/> is not 32 characters.
+        /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains a non-hex character.
+        /// </para>
+        /// </exception>
+        public static Guid FromHexGuid(ReadOnlySpan<char> value)
+        {
+            if (value.Length != 32)
+            {
+                throw new FormatException("The input is not a valid hex GUID as its length is not 32 characters.");
             }
 
-            return output;
+            Span<byte> guidBytes = stackalloc byte[16];
+
+            FromHex(value, guidBytes);
+
+            return ReadGuidBigEndian(guidBytes);
         }
     }
 }
