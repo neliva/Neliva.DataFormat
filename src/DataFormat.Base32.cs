@@ -24,7 +24,7 @@ namespace Neliva
 
         /// <summary>
         /// Converts the span <paramref name="value"/> to lowercase base32 representation
-        /// using <c>0123456789abcdefghjkmnpqrstvwxyz</c> alphabet.
+        /// using the <c>0123456789abcdefghjkmnpqrstvwxyz</c> alphabet.
         /// </summary>
         /// <param name="value">
         /// The span to convert.
@@ -129,6 +129,13 @@ namespace Neliva
 
             byte[] output = GC.AllocateUninitializedArray<byte>((int)((long)length * 5 / 8));
 
+            FromBase32(value, output);
+
+            return output;
+        }
+
+        private static void FromBase32(ReadOnlySpan<char> value, Span<byte> destination)
+        {
             int buffer = 0;
             int bitsLeft = 0;
             int count = 0;
@@ -147,12 +154,64 @@ namespace Neliva
 
                 if (bitsLeft >= 8)
                 {
-                    output[count++] = (byte)(buffer >> (bitsLeft - 8));
+                    destination[count++] = (byte)(buffer >> (bitsLeft - 8));
                     bitsLeft -= 8;
                 }
             }
+        }
 
-            return output;
+        /// <summary>
+        /// Converts the <paramref name="value"/> to lowercase base32 representation
+        /// using the <c>0123456789abcdefghjkmnpqrstvwxyz</c> alphabet.
+        /// </summary>
+        /// <param name="value">
+        /// The <see cref="Guid"/> to convert.
+        /// </param>
+        /// <returns>
+        /// The string representation in base32 of the provided <paramref name="value"/>.
+        /// The length of the returned string is 26 characters.
+        /// </returns>
+        public static string ToBase32Guid(Guid value)
+        {
+            Span<byte> guidBytes = stackalloc byte[16];
+
+            WriteGuidBigEndian(value, guidBytes);
+
+            return ToBase32(guidBytes);
+        }
+
+        /// <summary>
+        /// Converts the base32 encoded <paramref name="value"/> to a <see cref="Guid"/> structure.
+        /// </summary>
+        /// <param name="value">
+        /// The value to convert.
+        /// </param>
+        /// <returns>
+        /// The <see cref="Guid"/> representation of the provided base32 span <paramref name="value"/>.
+        /// </returns>
+        /// <exception cref="FormatException">
+        /// <para>
+        /// The length of <paramref name="value"/> is not 26 characters.
+        /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains a non-base32 character.
+        /// </para>
+        /// </exception>
+        public static Guid FromBase32Guid(ReadOnlySpan<char> value)
+        {
+            if (value.Length != 26)
+            {
+                throw new FormatException("The input is not a valid base32 GUID as its length is not 26 characters.");
+            }
+
+            Span<byte> guidBytes = stackalloc byte[16];
+
+            FromBase32(value, guidBytes);
+
+            return ReadGuidBigEndian(guidBytes);
         }
     }
 }
