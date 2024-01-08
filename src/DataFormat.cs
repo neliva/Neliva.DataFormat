@@ -31,10 +31,12 @@ namespace Neliva
 
         private static Guid ReadGuidBigEndian(Span<byte> value)
         {
+            var v15 = value[15];
+
             return new Guid(
-                BinaryPrimitives.ReadUInt32BigEndian(value.Slice(0, 4)),
-                BinaryPrimitives.ReadUInt16BigEndian(value.Slice(4, 2)),
-                BinaryPrimitives.ReadUInt16BigEndian(value.Slice(6, 2)),
+                BinaryPrimitives.ReadUInt32BigEndian(value),
+                BinaryPrimitives.ReadUInt16BigEndian(value.Slice(4)),
+                BinaryPrimitives.ReadUInt16BigEndian(value.Slice(6)),
                 value[8],
                 value[9],
                 value[10],
@@ -42,7 +44,7 @@ namespace Neliva
                 value[12],
                 value[13],
                 value[14],
-                value[15]);
+                v15);
         }
 
         private static void WriteGuidBigEndian(Guid value, Span<byte> destination)
@@ -52,7 +54,7 @@ namespace Neliva
                 throw new ArgumentOutOfRangeException(nameof(destination));
             }
 
-            // Fix broken GUID endianness
+            // Make the GUID bytes appear in the big endian format.
             Swap(destination, 0, 3);
             Swap(destination, 1, 2);
             Swap(destination, 4, 5);

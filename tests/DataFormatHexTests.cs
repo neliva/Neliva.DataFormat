@@ -15,7 +15,7 @@ namespace Neliva.Tests
         public void FullRangeRoundTripPass()
         {
             string hexStrLower =
-                "000102030405060708090a0b0c0d0e0f" + 
+                "000102030405060708090a0b0c0d0e0f" +
                 "101112131415161718191a1b1c1d1e1f" +
                 "202122232425262728292a2b2c2d2e2f" +
                 "303132333435363738393a3b3c3d3e3f" +
@@ -128,6 +128,56 @@ namespace Neliva.Tests
         public unsafe void ToHexInputTooLargeFail(int inputSize)
         {
             var ex = Assert.ThrowsException<ArgumentOutOfRangeException>(() => DataFormat.ToHex(new ReadOnlySpan<byte>((void*)0, inputSize)));
+        }
+
+        [TestMethod]
+        [DataRow("00000000-0000-0000-0000-000000000000")]
+        [DataRow("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")]
+        [DataRow("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7")]
+        public void ToHexGuidPasses(string guidStr)
+        {
+            var expected = Guid.Parse(guidStr);
+
+            var guidHex = DataFormat.ToHexGuid(expected);
+
+            Assert.AreEqual(expected.ToString("N"), guidHex);
+        }
+
+        [TestMethod]
+        [DataRow("00000000-0000-0000-0000-000000000000")]
+        [DataRow("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")]
+        [DataRow("ffffffff-ffff-ffff-ffff-ffffffffffff")]
+        [DataRow("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7")]
+        [DataRow("1c0fcf80-5b4e-4fc9-944a-7aa4549d7cf7")]
+        public void FromHexGuidPasses(string guidStr)
+        {
+            var expected = Guid.Parse(guidStr);
+
+            var actual = DataFormat.FromHexGuid(guidStr.Replace("-", string.Empty));
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        [DataRow("")]
+        [DataRow("0000000000000000000000000000000")]
+        [DataRow("000000000000000000000000000000000")]
+        public void FromHexGuidInvalidInputLengthFail(string invalidLengthHex)
+        {
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHexGuid(invalidLengthHex));
+            Assert.AreEqual("The input is not a valid hex GUID as its length is not 32 characters.", ex.Message);
+        }
+
+        // Uppercase
+        [TestMethod]
+        [DataRow("000000000000N0000000000000000000")]
+        [DataRow("000000000000000000000x0000000000")]
+        [DataRow("00000000000000000z00000000000000")]
+        [DataRow("00000000p00000000000000000000000")]
+        public void FromHexGuidInvalidInputCharFail(string invalidCharInHex)
+        {
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHexGuid(invalidCharInHex));
+            Assert.AreEqual("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
         }
     }
 }

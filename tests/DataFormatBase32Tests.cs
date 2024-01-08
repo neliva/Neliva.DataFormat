@@ -139,5 +139,54 @@ namespace Neliva.Tests
         {
             var ex = Assert.ThrowsException<ArgumentOutOfRangeException>(() => DataFormat.ToBase32(new ReadOnlySpan<byte>((void*)0, inputSize)));
         }
+
+        [TestMethod]
+        [DataRow("00000000-0000-0000-0000-000000000000", "00000000000000000000000000")]
+        [DataRow("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
+        [DataRow("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7", "3g7wz02v9s7wk52afaj597bwyw")]
+        public void ToBase32GuidPasses(string guidStr, string base32Guid)
+        {
+            var expected = Guid.Parse(guidStr);
+
+            var actual = DataFormat.ToBase32Guid(expected);
+
+            Assert.AreEqual(base32Guid, actual);
+        }
+
+        [TestMethod]
+        [DataRow("00000000-0000-0000-0000-000000000000", "00000000000000000000000000")]
+        [DataRow("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
+        [DataRow("ffffffff-ffff-ffff-ffff-ffffffffffff", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
+        [DataRow("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7", "3g7wz02v9s7wk52afaj597bwyw")]
+        [DataRow("1c0fcf80-5b4e-4fc9-944a-7aa4549d7cf7", "3g7wz02v9s7wk52afaj597bwyw")]
+        public void FromBase32GuidPasses(string guidStr, string base32Guid)
+        {
+            var expected = Guid.Parse(guidStr);
+
+            var actual = DataFormat.FromBase32Guid(base32Guid);
+
+            Assert.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        [DataRow("")]
+        [DataRow("zzzzzzzzzzzzzzzzzzzzzzzzz")]
+        [DataRow("zzzzzzzzzzzzzzzzzzzzzzzzzww")]
+        public void FromBase32GuidInvalidInputLengthFail(string invalidLengthBase32)
+        {
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32Guid(invalidLengthBase32));
+            Assert.AreEqual("The input is not a valid base32 GUID as its length is not 26 characters.", ex.Message);
+        }
+
+        [TestMethod]
+        [DataRow("zzzzzzzzzzzzzzzzzzuzzzzzzw")]
+        [DataRow("zzzzzzzzzzzzzzlzzzzzzzzzzw")]
+        [DataRow("zzzzzzzozzzzzzzzzzzzzzzzzw")]
+        [DataRow("zzzzzzzzzzzzzzzzz zzzzzzzw")]
+        public void FromBase32GuidInvalidInputCharFail(string invalidCharInBase32)
+        {
+            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32Guid(invalidCharInBase32));
+            Assert.AreEqual("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
+        }
     }
 }
