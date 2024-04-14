@@ -16,13 +16,15 @@ The custom base32 utilizes the `0123456789abcdefghjkmnpqrstvwxyz` alphabet that 
 ```C#
 // using Neliva;
 
-var dataBytes = new byte[] { 1, 2, 3 };
+string dataHex = DataFormat.ToHex(new byte[] { 1, 2, 3 });
+byte[] bytesFromHex = DataFormat.FromHex(dataHex);
 
-// Encode to lowercase
-string dataHex = DataFormat.ToHex(dataBytes);
-string dataBase32 = DataFormat.ToBase32(dataBytes);
+string guidHex = DataFormat.ToHexGuid(Guid.NewGuid());
+Guid guidFromHex = DataFormat.FromHexGuid(guidHex);
 
-// Decode from lower or uppercase
-var dataBytes2 = DataFormat.FromHex(dataHex);
-var dataBytes3 = DataFormat.FromBase32(dataBase32);
+string dataBase32 = DataFormat.ToBase32(new byte[] { 1, 2, 3 });
+byte[] bytesFromBase32 = DataFormat.FromBase32(dataBase32);
+
+string guidBase32 = DataFormat.ToBase32Guid(Guid.NewGuid());
+Guid guidFromBase32 = DataFormat.FromBase32Guid(guidBase32);
 ```
