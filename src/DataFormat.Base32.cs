@@ -52,7 +52,7 @@ namespace Neliva
 
             fixed (byte* bytesPtr = value)
             {
-                return string.Create((int)((((long)length * 8) + 4) / 5), (Ptr: (IntPtr)bytesPtr, Length: length), (dest, args) =>
+                return string.Create((int)((((long)length * 8) + 4) / 5), (Ptr: (IntPtr)bytesPtr, Length: length), static (dest, args) =>
                 {
                     var src = new ReadOnlySpan<byte>((byte*)args.Ptr, args.Length);
 
