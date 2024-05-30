@@ -1,6 +1,6 @@
 ## Neliva.DataFormat
 
-This repository provides support to efficiently encode and decode data in hex and base32.
+This repository provides support to efficiently encode and decode data in hex and modified base32hex formats.
 
 [![main](https://github.com/neliva/Neliva.DataFormat/actions/workflows/main.yml/badge.svg)](https://github.com/neliva/Neliva.DataFormat/actions/workflows/main.yml)
 [![dotnet 6.0](https://img.shields.io/badge/dotnet-6.0-green)](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
