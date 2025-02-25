@@ -213,5 +213,49 @@ namespace Neliva
 
             return ReadGuidBigEndian(guidBytes);
         }
+
+        /// <summary>
+        /// Verifies if the provided span <paramref name="value"/> is
+        /// a valid base32 representation.
+        /// </summary>
+        /// <param name="value">
+        /// The span to verify.
+        /// </param>
+        /// <returns>
+        /// <c>true</c> if the span <paramref name="value"/> has
+        /// correct number of base32 digits; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This method returns <c>true</c> for an empty span.
+        /// </remarks>
+        public static bool IsBase32(ReadOnlySpan<char> value)
+        {
+            int length = value.Length;
+
+            if (length == 0)
+            {
+                return true;
+            }
+
+            switch (length % 8)
+            {
+                case 1:
+                case 3:
+                case 6:
+                    return false;
+            }
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                int ch = value[i];
+
+                if (ch >= MC || ((ch = Base32Map[ch]) >= MC))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }

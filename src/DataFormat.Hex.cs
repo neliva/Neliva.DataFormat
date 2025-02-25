@@ -178,5 +178,40 @@ namespace Neliva
 
             return ReadGuidBigEndian(guidBytes);
         }
+
+        /// <summary>
+        /// Verifies if the provided span <paramref name="value"/> is
+        /// a valid hexadecimal representation.
+        /// </summary>
+        /// <param name="value">
+        /// The span to verify.
+        /// </param>
+        /// <returns>
+        /// <c>true</c> if the span <paramref name="value"/> has
+        /// an even number of hexadecimal digits; otherwise, <c>false</c>.
+        /// </returns>
+        /// <remarks>
+        /// This method returns <c>true</c> for an empty span.
+        /// </remarks>
+        public static bool IsHex(ReadOnlySpan<char> value)
+        {
+            if ((value.Length & 1) != 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < value.Length; i += 2)
+            {
+                int c1 = value[i];
+                int c2 = value[i + 1];
+
+                if ((c1 >= MC) || ((c1 = HexMap[c1]) >= MC) || (c2 >= MC) || ((c2 = HexMap[c2]) >= MC))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }
