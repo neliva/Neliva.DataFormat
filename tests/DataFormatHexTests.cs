@@ -34,6 +34,9 @@ namespace Neliva.Tests
 
             string hexStrUpper = hexStrLower.ToUpperInvariant();
 
+            Assert.IsTrue(DataFormat.IsHex(hexStrLower));
+            Assert.IsTrue(DataFormat.IsHex(hexStrUpper));
+
             var hexLower = DataFormat.FromHex(hexStrLower);
             var hexUpper = DataFormat.FromHex(hexStrUpper);
 
@@ -54,6 +57,8 @@ namespace Neliva.Tests
         [TestMethod]
         public void FromHexEmptyStringPass()
         {
+            Assert.IsTrue(DataFormat.IsHex(string.Empty));
+
             var actual = DataFormat.FromHex(string.Empty);
 
             Assert.AreEqual(Array.Empty<byte>(), actual);
@@ -62,7 +67,9 @@ namespace Neliva.Tests
         [TestMethod]
         public void FromHexNullStringPass()
         {
-            var actual = DataFormat.FromHex(null);
+            Assert.IsTrue(DataFormat.IsHex((string)null));
+
+            var actual = DataFormat.FromHex((string)null);
 
             Assert.AreEqual(Array.Empty<byte>(), actual);
         }
@@ -91,6 +98,8 @@ namespace Neliva.Tests
         [DataRow("6E656C69766")]
         public void FromHexInvalidInputLengthFail(string invalidLengthHex)
         {
+            Assert.IsFalse(DataFormat.IsHex(invalidLengthHex));
+
             var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex(invalidLengthHex));
             Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
         }
@@ -118,6 +127,8 @@ namespace Neliva.Tests
         [DataRow("n0")]
         public void FromHexInvalidInputCharFail(string invalidCharInHex)
         {
+            Assert.IsFalse(DataFormat.IsHex(invalidCharInHex));
+
             var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex(invalidCharInHex));
             Assert.AreEqual("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
         }
