@@ -17,12 +17,14 @@ The custom base32 utilizes the `0123456789abcdefghjkmnpqrstvwxyz` alphabet that 
 // using Neliva;
 
 string dataHex = DataFormat.ToHex(new byte[] { 1, 2, 3 });
+bool isHex = DataFormat.IsHex(dataHex);
 byte[] bytesFromHex = DataFormat.FromHex(dataHex);
 
 string guidHex = DataFormat.ToHexGuid(Guid.NewGuid());
 Guid guidFromHex = DataFormat.FromHexGuid(guidHex);
 
 string dataBase32 = DataFormat.ToBase32(new byte[] { 1, 2, 3 });
+bool isBase32 = DataFormat.IsBase32(dataBase32);
 byte[] bytesFromBase32 = DataFormat.FromBase32(dataBase32);
 
 string guidBase32 = DataFormat.ToBase32Guid(Guid.NewGuid());
