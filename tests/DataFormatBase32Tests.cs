@@ -31,6 +31,9 @@ namespace Neliva.Tests
 
             string base32StrUpper = base32StrLower.ToUpperInvariant();
 
+            Assert.IsTrue(DataFormat.IsBase32(base32StrLower));
+            Assert.IsTrue(DataFormat.IsBase32(base32StrUpper));
+
             var base32Lower = DataFormat.FromBase32(base32StrLower);
             var base32Upper = DataFormat.FromBase32(base32StrUpper);
 
@@ -51,6 +54,8 @@ namespace Neliva.Tests
         [TestMethod]
         public void FromBase32EmptyStringPass()
         {
+            Assert.IsTrue(DataFormat.IsBase32(string.Empty));
+
             var actual = DataFormat.FromBase32(string.Empty);
 
             Assert.AreEqual(Array.Empty<byte>(), actual);
@@ -59,7 +64,9 @@ namespace Neliva.Tests
         [TestMethod]
         public void FromBase32NullStringPass()
         {
-            var actual = DataFormat.FromBase32(null);
+            Assert.IsTrue(DataFormat.IsBase32((string)null));
+
+            var actual = DataFormat.FromBase32((string)null);
 
             Assert.AreEqual(Array.Empty<byte>(), actual);
         }
@@ -89,6 +96,8 @@ namespace Neliva.Tests
         [DataRow("DSJPRTBPC40")]
         public void FromBase32InvalidInputLengthFail(string invalidLengthBase32)
         {
+            Assert.IsFalse(DataFormat.IsBase32(invalidLengthBase32));
+
             var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32(invalidLengthBase32));
             Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
         }
@@ -128,6 +137,8 @@ namespace Neliva.Tests
         [DataRow("d\u0308jprtbpc4")]
         public void FromBase32InvalidInputCharFail(string invalidCharInBase32)
         {
+            Assert.IsFalse(DataFormat.IsBase32(invalidCharInBase32));
+
             var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32(invalidCharInBase32));
             Assert.AreEqual("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
         }
