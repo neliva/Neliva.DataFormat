@@ -249,7 +249,7 @@ namespace Neliva
             {
                 int ch = value[i];
 
-                if (ch >= MC || ((ch = Base32Map[ch]) >= MC))
+                if (ch >= MC || Base32Map[ch] >= MC)
                 {
                     return false;
                 }

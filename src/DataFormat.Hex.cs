@@ -205,7 +205,7 @@ namespace Neliva
                 int c1 = value[i];
                 int c2 = value[i + 1];
 
-                if ((c1 >= MC) || ((c1 = HexMap[c1]) >= MC) || (c2 >= MC) || ((c2 = HexMap[c2]) >= MC))
+                if (c1 >= MC || HexMap[c1] >= MC || c2 >= MC || HexMap[c2] >= MC)
                 {
                     return false;
                 }
