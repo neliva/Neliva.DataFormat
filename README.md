@@ -1,18 +1,23 @@
 ## Neliva.DataFormat
 
-This repository provides support to efficiently encode and decode data in hex and modified base32hex formats.
+This repository provides efficient encoding and decoding of data as lowercase hexadecimal and a modified Base32 (base32hex–derived) format.
+Both the specification and the reference implementation are released into the public domain. See the [UNLICENSE](UNLICENSE.md) file for details.
 
 [![main](https://github.com/neliva/Neliva.DataFormat/actions/workflows/main.yml/badge.svg)](https://github.com/neliva/Neliva.DataFormat/actions/workflows/main.yml)
-[![dotnet 6.0](https://img.shields.io/badge/dotnet-8.0-green)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-[![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/Neliva.DataFormat)](https://www.nuget.org/packages/Neliva.DataFormat)
+[![.NET 8.0](https://img.shields.io/badge/dotnet-8.0-green)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+[![NuGet (with prereleases)](https://img.shields.io/nuget/vpre/Neliva.DataFormat)](https://www.nuget.org/packages/Neliva.DataFormat)
 
 ## Overview
 
-Encoder uses lowercase alphabet suitable for **naming files and cloud objects**. Decoder understands lower and uppercase characters.
+Encoders produce lowercase output suitable for **naming files and cloud storage objects**.
+Decoders accept both lowercase and uppercase input.
 
-The custom base32 utilizes the `0123456789abcdefghjkmnpqrstvwxyz` alphabet that omits the `I L O U` letters.
+Output is deterministic, lowercase, and unpadded.
+
+The custom Base32 alphabet `0123456789abcdefghjkmnpqrstvwxyz` omits `I, L, O, U` letters.
 
 ### Usage
+
 ```C#
 // using Neliva;
 
