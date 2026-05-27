@@ -381,5 +381,85 @@ namespace Neliva.Tests
             var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32Guid(invalidCharInBase32));
             Assert.Equal("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
         }
+
+        // Covers ToBase32/FromBase32 across all (length % 5) input residues so every
+        // padding / bitsLeft branch in the encoder and decoder is exercised.
+        [Theory]
+        [InlineData(1)]   // -> 2 chars
+        [InlineData(2)]   // -> 4 chars
+        [InlineData(3)]   // -> 5 chars
+        [InlineData(4)]   // -> 7 chars
+        [InlineData(5)]   // -> 8 chars
+        [InlineData(6)]
+        [InlineData(7)]
+        [InlineData(9)]
+        [InlineData(10)]
+        [InlineData(15)]
+        [InlineData(16)]
+        [InlineData(17)]
+        public void Base32RoundTripVariableLengthsPass(int length)
+        {
+            var data = new byte[length];
+            for (int i = 0; i < length; i++)
+            {
+                data[i] = (byte)(i * 7 + 1);
+            }
+
+            string encoded = DataFormat.ToBase32(data);
+
+            Assert.True(DataFormat.IsBase32(encoded));
+
+            var decoded = DataFormat.FromBase32(encoded);
+
+            Assert.Equal(data, decoded);
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(7)]
+        [InlineData(15)]
+        [InlineData(16)]
+        [InlineData(33)]
+        public void HexRoundTripVariableLengthsPass(int length)
+        {
+            var data = new byte[length];
+            for (int i = 0; i < length; i++)
+            {
+                data[i] = (byte)(i * 11 + 3);
+            }
+
+            string encoded = DataFormat.ToHex(data);
+
+            Assert.True(DataFormat.IsHex(encoded));
+            Assert.Equal(length * 2, encoded.Length);
+
+            var decoded = DataFormat.FromHex(encoded);
+
+            Assert.Equal(data, decoded);
+        }
+
+        // Explicitly verifies IsBase32 returns true for every valid (length % 8) residue.
+        [Theory]
+        [InlineData("")]                  // 0
+        [InlineData("00")]                // 2
+        [InlineData("0000")]              // 4
+        [InlineData("00000")]             // 5
+        [InlineData("0000000")]           // 7
+        [InlineData("00000000")]          // 8 (0)
+        [InlineData("0000000000")]        // 10 (2)
+        public void IsBase32ValidLengthsReturnsTrue(string value)
+        {
+            Assert.True(DataFormat.IsBase32(value));
+        }
+
+        [Theory]
+        [InlineData("00")]
+        [InlineData("abcdef")]
+        [InlineData("0123456789abcdefABCDEF")]
+        public void IsHexValidReturnsTrue(string value)
+        {
+            Assert.True(DataFormat.IsHex(value));
+        }
     }
 }
