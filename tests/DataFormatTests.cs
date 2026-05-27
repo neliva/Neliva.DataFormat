@@ -3,15 +3,14 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Neliva.Tests
 {
     [ExcludeFromCodeCoverage]
-    [TestClass]
     public class DataFormatHexTests
     {
-        [TestMethod]
+        [Fact]
         public void FullRangeRoundTripPass()
         {
             string hexStrLower =
@@ -34,169 +33,167 @@ namespace Neliva.Tests
 
             string hexStrUpper = hexStrLower.ToUpperInvariant();
 
-            Assert.IsTrue(DataFormat.IsHex(hexStrLower));
-            Assert.IsTrue(DataFormat.IsHex(hexStrUpper));
+            Assert.True(DataFormat.IsHex(hexStrLower));
+            Assert.True(DataFormat.IsHex(hexStrUpper));
 
             var hexLower = DataFormat.FromHex(hexStrLower);
             var hexUpper = DataFormat.FromHex(hexStrUpper);
 
-            Assert.AreEqual(256, hexLower.Length);
-            Assert.AreEqual(256, hexUpper.Length);
+            Assert.Equal(256, hexLower.Length);
+            Assert.Equal(256, hexUpper.Length);
 
             for (int i = 0; i < 256; i++)
             {
-                Assert.AreEqual(i, hexLower[i], "lower");
-                Assert.AreEqual(i, hexUpper[i], "upper");
+                Assert.Equal(i, hexLower[i]);
+                Assert.Equal(i, hexUpper[i]);
             }
 
             string hexResut = DataFormat.ToHex(hexLower);
 
-            Assert.AreEqual(hexStrLower, hexResut);
+            Assert.Equal(hexStrLower, hexResut);
         }
 
-        [TestMethod]
+        [Fact]
         public void FromHexEmptyStringPass()
         {
-            Assert.IsTrue(DataFormat.IsHex(string.Empty));
+            Assert.True(DataFormat.IsHex(string.Empty));
 
             var actual = DataFormat.FromHex(string.Empty);
 
-            Assert.AreEqual(Array.Empty<byte>(), actual);
+            Assert.Equal(Array.Empty<byte>(), actual);
         }
 
-        [TestMethod]
+        [Fact]
         public void FromHexNullStringPass()
         {
-            Assert.IsTrue(DataFormat.IsHex((string)null));
+            Assert.True(DataFormat.IsHex((string)null));
 
             var actual = DataFormat.FromHex((string)null);
 
-            Assert.AreEqual(Array.Empty<byte>(), actual);
+            Assert.Equal(Array.Empty<byte>(), actual);
         }
 
-        [TestMethod]
+        [Fact]
         public void ToHexEmptyArrayPass()
         {
             var actual = DataFormat.ToHex(Array.Empty<byte>());
 
-            Assert.AreEqual(string.Empty, actual);
+            Assert.Equal(string.Empty, actual);
         }
 
-        [TestMethod]
+        [Fact]
         public void ToHexNullArrayPass()
         {
             var actual = DataFormat.ToHex(null);
 
-            Assert.AreEqual(string.Empty, actual);
+            Assert.Equal(string.Empty, actual);
         }
 
         // 6E656C697661
-        [TestMethod]
-        [DataRow("6")]
-        [DataRow("6E6")]
-        [DataRow("6E656")]
-        [DataRow("6E656C69766")]
+        [Theory]
+        [InlineData("6")]
+        [InlineData("6E6")]
+        [InlineData("6E656")]
+        [InlineData("6E656C69766")]
         public void FromHexInvalidInputLengthFail(string invalidLengthHex)
         {
-            Assert.IsFalse(DataFormat.IsHex(invalidLengthHex));
+            Assert.False(DataFormat.IsHex(invalidLengthHex));
 
-            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex(invalidLengthHex));
-            Assert.AreEqual("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromHex(invalidLengthHex));
+            Assert.Equal("The input is not a valid hex string as its length is not a multiple of 2.", ex.Message);
         }
 
         // Uppercase
-        [TestMethod]
-        [DataRow("  6E656C697661")]
-        [DataRow("6E656C697661  ")]
-        [DataRow("6E-656C69-7661")]
-        [DataRow("6E656C697661\u0061\u0300")]
-        [DataRow("\u0061\u03006E656C697661")]
-        [DataRow("\u200b6E656C6976611")]
-        [DataRow("0X")]
-        [DataRow("0\u0308")]
-        [DataRow("N0")]
+        [Theory]
+        [InlineData("  6E656C697661")]
+        [InlineData("6E656C697661  ")]
+        [InlineData("6E-656C69-7661")]
+        [InlineData("6E656C697661\u0061\u0300")]
+        [InlineData("\u0061\u03006E656C697661")]
+        [InlineData("\u200b6E656C6976611")]
+        [InlineData("0X")]
+        [InlineData("0\u0308")]
+        [InlineData("N0")]
         // Lowercase
-        [DataRow("  6e656c697661")]
-        [DataRow("6e656c697661  ")]
-        [DataRow("6e-656c69-7661")]
-        [DataRow("6e656c697661\u0061\u0300")]
-        [DataRow("\u0061\u03006e656c697661")]
-        [DataRow("\u200b6e656c6976611")]
-        [DataRow("0x")]
-        [DataRow("0\u0308")]
-        [DataRow("n0")]
+        [InlineData("  6e656c697661")]
+        [InlineData("6e656c697661  ")]
+        [InlineData("6e-656c69-7661")]
+        [InlineData("6e656c697661\u0061\u0300")]
+        [InlineData("\u0061\u03006e656c697661")]
+        [InlineData("\u200b6e656c6976611")]
+        [InlineData("0x")]
+        [InlineData("n0")]
         public void FromHexInvalidInputCharFail(string invalidCharInHex)
         {
-            Assert.IsFalse(DataFormat.IsHex(invalidCharInHex));
+            Assert.False(DataFormat.IsHex(invalidCharInHex));
 
-            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHex(invalidCharInHex));
-            Assert.AreEqual("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromHex(invalidCharInHex));
+            Assert.Equal("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
         }
 
-        [TestMethod]
-        [DataRow(int.MaxValue)]
-        [DataRow(int.MaxValue / 2 + 1)]
+        [Theory]
+        [InlineData(int.MaxValue)]
+        [InlineData(int.MaxValue / 2 + 1)]
         public unsafe void ToHexInputTooLargeFail(int inputSize)
         {
-            var ex = Assert.ThrowsException<ArgumentOutOfRangeException>(() => DataFormat.ToHex(new ReadOnlySpan<byte>((void*)0, inputSize)));
+            Assert.Throws<ArgumentOutOfRangeException>(() => DataFormat.ToHex(new ReadOnlySpan<byte>((void*)0, inputSize)));
         }
 
-        [TestMethod]
-        [DataRow("00000000-0000-0000-0000-000000000000")]
-        [DataRow("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")]
-        [DataRow("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7")]
+        [Theory]
+        [InlineData("00000000-0000-0000-0000-000000000000")]
+        [InlineData("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")]
+        [InlineData("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7")]
         public void ToHexGuidPasses(string guidStr)
         {
             var expected = Guid.Parse(guidStr);
 
             var guidHex = DataFormat.ToHexGuid(expected);
 
-            Assert.AreEqual(expected.ToString("N"), guidHex);
+            Assert.Equal(expected.ToString("N"), guidHex);
         }
 
-        [TestMethod]
-        [DataRow("00000000-0000-0000-0000-000000000000")]
-        [DataRow("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")]
-        [DataRow("ffffffff-ffff-ffff-ffff-ffffffffffff")]
-        [DataRow("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7")]
-        [DataRow("1c0fcf80-5b4e-4fc9-944a-7aa4549d7cf7")]
+        [Theory]
+        [InlineData("00000000-0000-0000-0000-000000000000")]
+        [InlineData("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF")]
+        [InlineData("ffffffff-ffff-ffff-ffff-ffffffffffff")]
+        [InlineData("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7")]
+        [InlineData("1c0fcf80-5b4e-4fc9-944a-7aa4549d7cf7")]
         public void FromHexGuidPasses(string guidStr)
         {
             var expected = Guid.Parse(guidStr);
 
             var actual = DataFormat.FromHexGuid(guidStr.Replace("-", string.Empty));
 
-            Assert.AreEqual(expected, actual);
+            Assert.Equal(expected, actual);
         }
 
-        [TestMethod]
-        [DataRow("")]
-        [DataRow("0000000000000000000000000000000")]
-        [DataRow("000000000000000000000000000000000")]
+        [Theory]
+        [InlineData("")]
+        [InlineData("0000000000000000000000000000000")]
+        [InlineData("000000000000000000000000000000000")]
         public void FromHexGuidInvalidInputLengthFail(string invalidLengthHex)
         {
-            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHexGuid(invalidLengthHex));
-            Assert.AreEqual("The input is not a valid hex GUID as its length is not 32 characters.", ex.Message);
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromHexGuid(invalidLengthHex));
+            Assert.Equal("The input is not a valid hex GUID as its length is not 32 characters.", ex.Message);
         }
 
         // Uppercase
-        [TestMethod]
-        [DataRow("000000000000N0000000000000000000")]
-        [DataRow("000000000000000000000x0000000000")]
-        [DataRow("00000000000000000z00000000000000")]
-        [DataRow("00000000p00000000000000000000000")]
+        [Theory]
+        [InlineData("000000000000N0000000000000000000")]
+        [InlineData("000000000000000000000x0000000000")]
+        [InlineData("00000000000000000z00000000000000")]
+        [InlineData("00000000p00000000000000000000000")]
         public void FromHexGuidInvalidInputCharFail(string invalidCharInHex)
         {
-            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromHexGuid(invalidCharInHex));
-            Assert.AreEqual("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromHexGuid(invalidCharInHex));
+            Assert.Equal("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
         }
     }
 
     [ExcludeFromCodeCoverage]
-    [TestClass]
     public class DataFormatBase32Tests
     {
-        [TestMethod]
+        [Fact]
         public void FullRangeRoundTripPass()
         {
             string base32StrLower =
@@ -216,173 +213,173 @@ namespace Neliva.Tests
 
             string base32StrUpper = base32StrLower.ToUpperInvariant();
 
-            Assert.IsTrue(DataFormat.IsBase32(base32StrLower));
-            Assert.IsTrue(DataFormat.IsBase32(base32StrUpper));
+            Assert.True(DataFormat.IsBase32(base32StrLower));
+            Assert.True(DataFormat.IsBase32(base32StrUpper));
 
             var base32Lower = DataFormat.FromBase32(base32StrLower);
             var base32Upper = DataFormat.FromBase32(base32StrUpper);
 
-            Assert.AreEqual(256, base32Lower.Length);
-            Assert.AreEqual(256, base32Upper.Length);
+            Assert.Equal(256, base32Lower.Length);
+            Assert.Equal(256, base32Upper.Length);
 
             for (int i = 0; i < 256; i++)
             {
-                Assert.AreEqual(i, base32Lower[i], "lower");
-                Assert.AreEqual(i, base32Upper[i], "upper");
+                Assert.Equal(i, base32Lower[i]);
+                Assert.Equal(i, base32Upper[i]);
             }
 
             string base32Resut = DataFormat.ToBase32(base32Lower);
 
-            Assert.AreEqual(base32StrLower, base32Resut);
+            Assert.Equal(base32StrLower, base32Resut);
         }
 
-        [TestMethod]
+        [Fact]
         public void FromBase32EmptyStringPass()
         {
-            Assert.IsTrue(DataFormat.IsBase32(string.Empty));
+            Assert.True(DataFormat.IsBase32(string.Empty));
 
             var actual = DataFormat.FromBase32(string.Empty);
 
-            Assert.AreEqual(Array.Empty<byte>(), actual);
+            Assert.Equal(Array.Empty<byte>(), actual);
         }
 
-        [TestMethod]
+        [Fact]
         public void FromBase32NullStringPass()
         {
-            Assert.IsTrue(DataFormat.IsBase32((string)null));
+            Assert.True(DataFormat.IsBase32((string)null));
 
             var actual = DataFormat.FromBase32((string)null);
 
-            Assert.AreEqual(Array.Empty<byte>(), actual);
+            Assert.Equal(Array.Empty<byte>(), actual);
         }
 
-        [TestMethod]
+        [Fact]
         public void ToBase32EmptyArrayPass()
         {
             var actual = DataFormat.ToBase32(Array.Empty<byte>());
 
-            Assert.AreEqual(string.Empty, actual);
+            Assert.Equal(string.Empty, actual);
         }
 
-        [TestMethod]
+        [Fact]
         public void ToBase32NullArrayPass()
         {
             var actual = DataFormat.ToBase32(null);
 
-            Assert.AreEqual(string.Empty, actual);
+            Assert.Equal(string.Empty, actual);
         }
 
         // DSJPRTBPC4
-        [TestMethod]
-        [DataRow("D")]
-        [DataRow("DSJ")]
-        [DataRow("DSJPRT")]
-        [DataRow("DSJPRTBPC")]
-        [DataRow("DSJPRTBPC40")]
+        [Theory]
+        [InlineData("D")]
+        [InlineData("DSJ")]
+        [InlineData("DSJPRT")]
+        [InlineData("DSJPRTBPC")]
+        [InlineData("DSJPRTBPC40")]
         public void FromBase32InvalidInputLengthFail(string invalidLengthBase32)
         {
-            Assert.IsFalse(DataFormat.IsBase32(invalidLengthBase32));
+            Assert.False(DataFormat.IsBase32(invalidLengthBase32));
 
-            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32(invalidLengthBase32));
-            Assert.AreEqual("The input is not a valid base32 string as its length is not correct.", ex.Message);
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32(invalidLengthBase32));
+            Assert.Equal("The input is not a valid base32 string as its length is not correct.", ex.Message);
         }
 
         // Uppercase
-        [TestMethod]
-        [DataRow(" DSJPRTBPC")]
-        [DataRow("SJPRTBPC4 ")]
-        [DataRow("DS-PRTBPC4")]
-        [DataRow("DSJPRT\u0061\u0300C4")]
-        [DataRow("\u0061\u0300JPRTBPC4")]
-        [DataRow("D\u200bJPRTBPC4")]
-        [DataRow("LA")]
-        [DataRow("AO")]
-        [DataRow("AI")]
-        [DataRow("AU")]
-        [DataRow("DSJPRTBLC4")]
-        [DataRow("DSJPOTBPC4")]
-        [DataRow("DSJIRTBPC4")]
-        [DataRow("DSJPRTBPCU")]
-        [DataRow("D\u0308JPRTBPC4")]
+        [Theory]
+        [InlineData(" DSJPRTBPC")]
+        [InlineData("SJPRTBPC4 ")]
+        [InlineData("DS-PRTBPC4")]
+        [InlineData("DSJPRT\u0061\u0300C4")]
+        [InlineData("\u0061\u0300JPRTBPC4")]
+        [InlineData("D\u200bJPRTBPC4")]
+        [InlineData("LA")]
+        [InlineData("AO")]
+        [InlineData("AI")]
+        [InlineData("AU")]
+        [InlineData("DSJPRTBLC4")]
+        [InlineData("DSJPOTBPC4")]
+        [InlineData("DSJIRTBPC4")]
+        [InlineData("DSJPRTBPCU")]
+        [InlineData("D\u0308JPRTBPC4")]
         // Lowercase
-        [DataRow(" dsjprtbpc")]
-        [DataRow("sjprtbpc4 ")]
-        [DataRow("ds-prtbpc4")]
-        [DataRow("dsjprt\u0061\u0300c4")]
-        [DataRow("\u0061\u0300jprtbpc4")]
-        [DataRow("d\u200bjprtbpc4")]
-        [DataRow("la")]
-        [DataRow("ao")]
-        [DataRow("ai")]
-        [DataRow("au")]
-        [DataRow("dsjprtblc4")]
-        [DataRow("dsjpotbpc4")]
-        [DataRow("dsjirtbpc4")]
-        [DataRow("dsjprtbpcu")]
-        [DataRow("d\u0308jprtbpc4")]
+        [InlineData(" dsjprtbpc")]
+        [InlineData("sjprtbpc4 ")]
+        [InlineData("ds-prtbpc4")]
+        [InlineData("dsjprt\u0061\u0300c4")]
+        [InlineData("\u0061\u0300jprtbpc4")]
+        [InlineData("d\u200bjprtbpc4")]
+        [InlineData("la")]
+        [InlineData("ao")]
+        [InlineData("ai")]
+        [InlineData("au")]
+        [InlineData("dsjprtblc4")]
+        [InlineData("dsjpotbpc4")]
+        [InlineData("dsjirtbpc4")]
+        [InlineData("dsjprtbpcu")]
+        [InlineData("d\u0308jprtbpc4")]
         public void FromBase32InvalidInputCharFail(string invalidCharInBase32)
         {
-            Assert.IsFalse(DataFormat.IsBase32(invalidCharInBase32));
+            Assert.False(DataFormat.IsBase32(invalidCharInBase32));
 
-            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32(invalidCharInBase32));
-            Assert.AreEqual("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32(invalidCharInBase32));
+            Assert.Equal("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
         }
 
-        [TestMethod]
-        [DataRow(int.MaxValue)]
-        [DataRow(((int)(((long)int.MaxValue * 5) / 8)) + 1)]
+        [Theory]
+        [InlineData(int.MaxValue)]
+        [InlineData(((int)(((long)int.MaxValue * 5) / 8)) + 1)]
         public unsafe void ToBase32InputTooLargeFail(int inputSize)
         {
-            var ex = Assert.ThrowsException<ArgumentOutOfRangeException>(() => DataFormat.ToBase32(new ReadOnlySpan<byte>((void*)0, inputSize)));
+            Assert.Throws<ArgumentOutOfRangeException>(() => DataFormat.ToBase32(new ReadOnlySpan<byte>((void*)0, inputSize)));
         }
 
-        [TestMethod]
-        [DataRow("00000000-0000-0000-0000-000000000000", "00000000000000000000000000")]
-        [DataRow("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
-        [DataRow("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7", "3g7wz02v9s7wk52afaj597bwyw")]
+        [Theory]
+        [InlineData("00000000-0000-0000-0000-000000000000", "00000000000000000000000000")]
+        [InlineData("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
+        [InlineData("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7", "3g7wz02v9s7wk52afaj597bwyw")]
         public void ToBase32GuidPasses(string guidStr, string base32Guid)
         {
             var expected = Guid.Parse(guidStr);
 
             var actual = DataFormat.ToBase32Guid(expected);
 
-            Assert.AreEqual(base32Guid, actual);
+            Assert.Equal(base32Guid, actual);
         }
 
-        [TestMethod]
-        [DataRow("00000000-0000-0000-0000-000000000000", "00000000000000000000000000")]
-        [DataRow("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
-        [DataRow("ffffffff-ffff-ffff-ffff-ffffffffffff", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
-        [DataRow("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7", "3g7wz02v9s7wk52afaj597bwyw")]
-        [DataRow("1c0fcf80-5b4e-4fc9-944a-7aa4549d7cf7", "3g7wz02v9s7wk52afaj597bwyw")]
+        [Theory]
+        [InlineData("00000000-0000-0000-0000-000000000000", "00000000000000000000000000")]
+        [InlineData("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
+        [InlineData("ffffffff-ffff-ffff-ffff-ffffffffffff", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
+        [InlineData("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7", "3g7wz02v9s7wk52afaj597bwyw")]
+        [InlineData("1c0fcf80-5b4e-4fc9-944a-7aa4549d7cf7", "3g7wz02v9s7wk52afaj597bwyw")]
         public void FromBase32GuidPasses(string guidStr, string base32Guid)
         {
             var expected = Guid.Parse(guidStr);
 
             var actual = DataFormat.FromBase32Guid(base32Guid);
 
-            Assert.AreEqual(expected, actual);
+            Assert.Equal(expected, actual);
         }
 
-        [TestMethod]
-        [DataRow("")]
-        [DataRow("zzzzzzzzzzzzzzzzzzzzzzzzz")]
-        [DataRow("zzzzzzzzzzzzzzzzzzzzzzzzzww")]
+        [Theory]
+        [InlineData("")]
+        [InlineData("zzzzzzzzzzzzzzzzzzzzzzzzz")]
+        [InlineData("zzzzzzzzzzzzzzzzzzzzzzzzzww")]
         public void FromBase32GuidInvalidInputLengthFail(string invalidLengthBase32)
         {
-            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32Guid(invalidLengthBase32));
-            Assert.AreEqual("The input is not a valid base32 GUID as its length is not 26 characters.", ex.Message);
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32Guid(invalidLengthBase32));
+            Assert.Equal("The input is not a valid base32 GUID as its length is not 26 characters.", ex.Message);
         }
 
-        [TestMethod]
-        [DataRow("zzzzzzzzzzzzzzzzzzuzzzzzzw")]
-        [DataRow("zzzzzzzzzzzzzzlzzzzzzzzzzw")]
-        [DataRow("zzzzzzzozzzzzzzzzzzzzzzzzw")]
-        [DataRow("zzzzzzzzzzzzzzzzz zzzzzzzw")]
+        [Theory]
+        [InlineData("zzzzzzzzzzzzzzzzzzuzzzzzzw")]
+        [InlineData("zzzzzzzzzzzzzzlzzzzzzzzzzw")]
+        [InlineData("zzzzzzzozzzzzzzzzzzzzzzzzw")]
+        [InlineData("zzzzzzzzzzzzzzzzz zzzzzzzw")]
         public void FromBase32GuidInvalidInputCharFail(string invalidCharInBase32)
         {
-            var ex = Assert.ThrowsException<FormatException>(() => DataFormat.FromBase32Guid(invalidCharInBase32));
-            Assert.AreEqual("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32Guid(invalidCharInBase32));
+            Assert.Equal("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
         }
     }
 }
