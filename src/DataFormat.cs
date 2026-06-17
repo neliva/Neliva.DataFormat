@@ -325,7 +325,7 @@ namespace Neliva
         {
             Span<byte> guidBytes = stackalloc byte[16];
 
-            WriteGuidBigEndian(value, guidBytes);
+            TryWriteGuidBigEndian(value, guidBytes);
 
             return ToHex(guidBytes);
         }
@@ -345,7 +345,7 @@ namespace Neliva
         {
             Span<byte> guidBytes = stackalloc byte[16];
 
-            WriteGuidBigEndian(value, guidBytes);
+            TryWriteGuidBigEndian(value, guidBytes);
 
             return ToBase32(guidBytes);
         }
@@ -503,12 +503,10 @@ namespace Neliva
             return new Guid(value, true);
         }
 
-        private static void WriteGuidBigEndian(Guid value, Span<byte> destination)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool TryWriteGuidBigEndian(Guid value, Span<byte> destination)
         {
-            if (!value.TryWriteBytes(destination, true, out _))
-            {
-                throw new ArgumentOutOfRangeException(nameof(destination));
-            }            
+            return value.TryWriteBytes(destination, true, out _);
         }
     }
 }
