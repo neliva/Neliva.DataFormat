@@ -188,6 +188,57 @@ namespace Neliva.Tests
             var ex = Assert.Throws<FormatException>(() => DataFormat.FromHexGuid(invalidCharInHex));
             Assert.Equal("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
         }
+
+        // --- Limits & bounds: mixed-case decoding and exhaustive round trips ---
+
+        [Theory]
+        [InlineData("0aB3Cd", new byte[] { 0x0A, 0xB3, 0xCD })]
+        [InlineData("DeAdBeEf", new byte[] { 0xDE, 0xAD, 0xBE, 0xEF })]
+        public void FromHexMixedCaseDecodesCorrectly(string mixed, byte[] expected)
+        {
+            Assert.True(DataFormat.IsHex(mixed));
+            Assert.Equal(expected, DataFormat.FromHex(mixed));
+        }
+
+        [Fact]
+        public void HexRoundTripAllLengthsPass()
+        {
+            for (int length = 0; length <= 64; length++)
+            {
+                var data = new byte[length];
+                for (int i = 0; i < length; i++)
+                {
+                    data[i] = (byte)((i * 31) + (length * 7));
+                }
+
+                string hex = DataFormat.ToHex(data);
+
+                Assert.Equal(length * 2, hex.Length);
+                Assert.True(DataFormat.IsHex(hex));
+                Assert.Equal(data, DataFormat.FromHex(hex));
+            }
+        }
+
+        [Fact]
+        public void HexGuidRoundTripExhaustivePass()
+        {
+            for (int i = 0; i < 256; i++)
+            {
+                var bytes = new byte[16];
+                for (int b = 0; b < 16; b++)
+                {
+                    bytes[b] = (byte)(i + (b * 17));
+                }
+
+                var expected = new Guid(bytes);
+
+                string hex = DataFormat.ToHexGuid(expected);
+
+                Assert.Equal(32, hex.Length);
+                Assert.True(DataFormat.IsHex(hex));
+                Assert.Equal(expected, DataFormat.FromHexGuid(hex));
+            }
+        }
     }
 
     [ExcludeFromCodeCoverage]
@@ -460,6 +511,93 @@ namespace Neliva.Tests
         public void IsHexValidReturnsTrue(string value)
         {
             Assert.True(DataFormat.IsHex(value));
+        }
+
+        // --- Limits & bounds: mixed/upper case, non-canonical trailing bits, exhaustive round trips ---
+
+        [Theory]
+        [InlineData("3G7wZ02V9s7Wk52AfAj597BwYw", "3g7wz02v9s7wk52afaj597bwyw")]
+        [InlineData("0123456789ABCDEFGHJKMNPQRSTVWXYZ", "0123456789abcdefghjkmnpqrstvwxyz")]
+        public void FromBase32MixedCaseDecodesAsLowercase(string mixed, string lower)
+        {
+            Assert.True(DataFormat.IsBase32(mixed));
+            Assert.Equal(DataFormat.FromBase32(lower), DataFormat.FromBase32(mixed));
+        }
+
+        // The decoder ignores the trailing bits that the encoder never emits, so a
+        // non-canonical final character decodes to the same byte(s) and re-encodes canonically.
+        [Theory]
+        [InlineData("10", "10", new byte[] { 0x08 })]
+        [InlineData("11", "10", new byte[] { 0x08 })]
+        [InlineData("zw", "zw", new byte[] { 0xFF })]
+        [InlineData("zz", "zw", new byte[] { 0xFF })]
+        public void FromBase32NonCanonicalTrailingBitsDecodeAndNormalize(string input, string canonical, byte[] expected)
+        {
+            var decoded = DataFormat.FromBase32(input);
+
+            Assert.Equal(expected, decoded);
+            Assert.Equal(canonical, DataFormat.ToBase32(decoded));
+        }
+
+        [Theory]
+        [InlineData("3G7WZ02V9S7WK52AFAJ597BWYW", "1c0fcf80-5b4e-4fc9-944a-7aa4549d7cf7")]
+        [InlineData("ZZZZZZZZZZZZZZZZZZZZZZZZZW", "ffffffff-ffff-ffff-ffff-ffffffffffff")]
+        public void FromBase32GuidUppercaseDecodesPass(string upperBase32Guid, string guidStr)
+        {
+            var expected = Guid.Parse(guidStr);
+
+            Assert.Equal(expected, DataFormat.FromBase32Guid(upperBase32Guid));
+        }
+
+        [Fact]
+        public void FromBase32GuidAcceptsNonCanonicalTrailingBits()
+        {
+            var allOnes = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff");
+
+            string canonical = new string('z', 25) + "w";
+            string nonCanonical = new string('z', 26);
+
+            Assert.Equal(allOnes, DataFormat.FromBase32Guid(canonical));
+            Assert.Equal(allOnes, DataFormat.FromBase32Guid(nonCanonical));
+        }
+
+        [Fact]
+        public void Base32RoundTripAllLengthsPass()
+        {
+            for (int length = 0; length <= 64; length++)
+            {
+                var data = new byte[length];
+                for (int i = 0; i < length; i++)
+                {
+                    data[i] = (byte)((i * 31) + (length * 7));
+                }
+
+                string b32 = DataFormat.ToBase32(data);
+
+                Assert.True(DataFormat.IsBase32(b32));
+                Assert.Equal(data, DataFormat.FromBase32(b32));
+            }
+        }
+
+        [Fact]
+        public void Base32GuidRoundTripExhaustivePass()
+        {
+            for (int i = 0; i < 256; i++)
+            {
+                var bytes = new byte[16];
+                for (int b = 0; b < 16; b++)
+                {
+                    bytes[b] = (byte)(i + (b * 17));
+                }
+
+                var expected = new Guid(bytes);
+
+                string b32 = DataFormat.ToBase32Guid(expected);
+
+                Assert.Equal(26, b32.Length);
+                Assert.True(DataFormat.IsBase32(b32));
+                Assert.Equal(expected, DataFormat.FromBase32Guid(b32));
+            }
         }
     }
 }
