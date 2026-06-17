@@ -9,7 +9,9 @@
 
     <Copyright>This is free and unencumbered software released into the public domain.</Copyright>
 
-    <PackageTags>hex base16 base32</PackageTags>
+    <PackageTags>hex base16 base32 encoding decoding guid hexadecimal binary converter data-format dotnet</PackageTags>
+
+    <PackageReadmeFile>NUGET.md</PackageReadmeFile>
 
     <PackageProjectUrl>https://github.com/neliva/Neliva.DataFormat</PackageProjectUrl>
 
@@ -67,6 +69,7 @@
   <ItemGroup>
     <!-- Needed for NuGet package. Do not remove. -->
     <None Include="..\UNLICENSE.md" Pack="true" PackagePath="" Visible="false" />
+    <None Include="NUGET.md" Pack="true" PackagePath="" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>
