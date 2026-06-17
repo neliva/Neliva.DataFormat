@@ -7,8 +7,19 @@ using System.Runtime.CompilerServices;
 namespace Neliva
 {
     /// <summary>
-    /// Provides support to encode and decode data in hex and base32.
+    /// Provides support to encode and decode data, including <see cref="Guid"/> values,
+    /// in hexadecimal and base32 formats.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Encoding methods produce lowercase output. Decoding and validation methods
+    /// accept both lowercase and uppercase input.
+    /// </para>
+    /// <para>
+    /// Base32 uses the <c>0123456789abcdefghjkmnpqrstvwxyz</c> alphabet (the
+    /// <c>i</c>, <c>l</c>, <c>o</c>, and <c>u</c> letters are omitted) and is produced without padding.
+    /// </para>
+    /// </remarks>
     public static class DataFormat
     {
         /// <summary>
@@ -31,7 +42,7 @@ namespace Neliva
         /// <summary>
         /// The map to decode bytes from hex characters.
         /// </summary>
-        private static ReadOnlySpan<byte> HexMap => new byte[MC]
+        private static ReadOnlySpan<byte> HexMap => new byte[]
         {
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
@@ -46,7 +57,7 @@ namespace Neliva
         /// <summary>
         /// The map to decode bytes from base32 <c>0123456789abcdefghjkmnpqrstvwxyz</c> characters.
         /// </summary>
-        private static ReadOnlySpan<byte> Base32Map => new byte[MC]
+        private static ReadOnlySpan<byte> Base32Map => new byte[]
         {
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
@@ -415,8 +426,8 @@ namespace Neliva
         /// The span to verify.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the span <paramref name="value"/> has
-        /// an even number of hexadecimal digits; otherwise, <c>false</c>.
+        /// <c>true</c> if the span <paramref name="value"/> has an even length and
+        /// every character is a valid hexadecimal digit; otherwise, <c>false</c>.
         /// </returns>
         /// <remarks>
         /// This method returns <c>true</c> for an empty span.
@@ -450,8 +461,8 @@ namespace Neliva
         /// The span to verify.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the span <paramref name="value"/> has
-        /// correct number of base32 digits; otherwise, <c>false</c>.
+        /// <c>true</c> if the span <paramref name="value"/> has a valid length and
+        /// every character is a valid base32 digit; otherwise, <c>false</c>.
         /// </returns>
         /// <remarks>
         /// This method returns <c>true</c> for an empty span.
