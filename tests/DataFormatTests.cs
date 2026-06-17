@@ -131,6 +131,23 @@ namespace Neliva.Tests
             Assert.Equal("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
         }
 
+        // Boundary: char 127 must map to invalid via the table; char 128 (== MC) and above must
+        // short-circuit on the ch >= MC guard before indexing the 128-entry map (no out-of-range read).
+        [Theory]
+        [InlineData("\u007f0")] // 127 at c1 -> table miss
+        [InlineData("0\u007f")] // 127 at c2 -> table miss
+        [InlineData("\u00800")] // 128 at c1 -> ch >= MC guard
+        [InlineData("0\u0080")] // 128 at c2 -> ch >= MC guard
+        [InlineData("\uffff0")] // max char at c1 -> ch >= MC guard
+        [InlineData("0\uffff")] // max char at c2 -> ch >= MC guard
+        public void FromHexCharMapBoundaryFails(string input)
+        {
+            Assert.False(DataFormat.IsHex(input));
+
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromHex(input));
+            Assert.Equal("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
+        }
+
         [Theory]
         [InlineData(int.MaxValue)]
         [InlineData(int.MaxValue / 2 + 1)]
@@ -373,6 +390,23 @@ namespace Neliva.Tests
             Assert.False(DataFormat.IsBase32(invalidCharInBase32));
 
             var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32(invalidCharInBase32));
+            Assert.Equal("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
+        }
+
+        // Boundary: char 127 must map to invalid via the table; char 128 (== MC) and above must
+        // short-circuit on the ch >= MC guard before indexing the 128-entry map (no out-of-range read).
+        [Theory]
+        [InlineData("\u007f0")] // 127 at first char -> table miss
+        [InlineData("0\u007f")] // 127 at second char -> table miss
+        [InlineData("\u00800")] // 128 at first char -> ch >= MC guard
+        [InlineData("0\u0080")] // 128 at second char -> ch >= MC guard
+        [InlineData("\uffff0")] // max char at first char -> ch >= MC guard
+        [InlineData("0\uffff")] // max char at second char -> ch >= MC guard
+        public void FromBase32CharMapBoundaryFails(string input)
+        {
+            Assert.False(DataFormat.IsBase32(input));
+
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32(input));
             Assert.Equal("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
         }
 
