@@ -93,7 +93,7 @@ namespace Neliva
 
             if (length > (int.MaxValue / 2))
             {
-                throw new ArgumentOutOfRangeException(nameof(value), "Input is too large to be processed.");
+                throw new ArgumentOutOfRangeException(nameof(value), "The input is too large to be processed.");
             }
 
             fixed (byte* bytesPtr = value)
@@ -139,7 +139,7 @@ namespace Neliva
 
             if (length > (int)(((long)int.MaxValue * 5) / 8))
             {
-                throw new ArgumentOutOfRangeException(nameof(value), "Input is too large to be processed.");
+                throw new ArgumentOutOfRangeException(nameof(value), "The input is too large to be processed.");
             }
 
             fixed (byte* bytesPtr = value)
