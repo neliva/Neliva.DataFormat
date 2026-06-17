@@ -260,6 +260,12 @@ namespace Neliva
         /// <para>
         /// The <paramref name="value"/> contains a non-base32 character.
         /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains non-zero trailing bits.
+        /// </para>
         /// </exception>
         public static byte[] FromBase32(ReadOnlySpan<char> value)
         {
@@ -308,6 +314,12 @@ namespace Neliva
                     destination[count++] = (byte)(buffer >> (bitsLeft - 8));
                     bitsLeft -= 8;
                 }
+            }
+
+            // Enforce canonical encoding: the trailing (padding) bits must be zero.
+            if ((buffer & ((1 << bitsLeft) - 1)) != 0)
+            {
+                throw new FormatException("The input is not a valid base32 string as it contains non-zero trailing bits.");
             }
         }
 
@@ -403,6 +415,12 @@ namespace Neliva
         /// <para>
         /// The <paramref name="value"/> contains a non-base32 character.
         /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains non-zero trailing bits.
+        /// </para>
         /// </exception>
         public static Guid FromBase32Guid(ReadOnlySpan<char> value)
         {
@@ -461,8 +479,8 @@ namespace Neliva
         /// The span to verify.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the span <paramref name="value"/> has a valid length and
-        /// every character is a valid base32 digit; otherwise, <c>false</c>.
+        /// <c>true</c> if the span <paramref name="value"/> has a valid length, contains only
+        /// valid base32 digits, and has zero trailing bits; otherwise, <c>false</c>.
         /// </returns>
         /// <remarks>
         /// This method returns <c>true</c> for an empty span.
@@ -492,6 +510,13 @@ namespace Neliva
                 {
                     return false;
                 }
+            }
+
+            int trailingBits = (5 * (length % 8)) % 8;
+
+            if (trailingBits != 0 && (Base32Map[value[length - 1]] & ((1 << trailingBits) - 1)) != 0)
+            {
+                return false;
             }
 
             return true;
