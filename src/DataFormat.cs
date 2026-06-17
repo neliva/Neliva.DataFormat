@@ -7,8 +7,19 @@ using System.Runtime.CompilerServices;
 namespace Neliva
 {
     /// <summary>
-    /// Provides support to encode and decode data in hex and base32.
+    /// Provides support to encode and decode data, including <see cref="Guid"/> values,
+    /// in hexadecimal and base32 formats.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Encoding methods produce lowercase output. Decoding and validation methods
+    /// accept both lowercase and uppercase input.
+    /// </para>
+    /// <para>
+    /// Base32 uses the <c>0123456789abcdefghjkmnpqrstvwxyz</c> alphabet (the
+    /// <c>i</c>, <c>l</c>, <c>o</c>, and <c>u</c> letters are omitted) and is produced without padding.
+    /// </para>
+    /// </remarks>
     public static class DataFormat
     {
         /// <summary>
@@ -31,7 +42,7 @@ namespace Neliva
         /// <summary>
         /// The map to decode bytes from hex characters.
         /// </summary>
-        private static ReadOnlySpan<byte> HexMap => new byte[MC]
+        private static ReadOnlySpan<byte> HexMap => new byte[]
         {
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
@@ -46,7 +57,7 @@ namespace Neliva
         /// <summary>
         /// The map to decode bytes from base32 <c>0123456789abcdefghjkmnpqrstvwxyz</c> characters.
         /// </summary>
-        private static ReadOnlySpan<byte> Base32Map => new byte[MC]
+        private static ReadOnlySpan<byte> Base32Map => new byte[]
         {
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
             MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC, MC,
@@ -82,7 +93,7 @@ namespace Neliva
 
             if (length > (int.MaxValue / 2))
             {
-                throw new ArgumentOutOfRangeException(nameof(value), "Input is too large to be processed.");
+                throw new ArgumentOutOfRangeException(nameof(value), "The input is too large to be processed.");
             }
 
             fixed (byte* bytesPtr = value)
@@ -128,7 +139,7 @@ namespace Neliva
 
             if (length > (int)(((long)int.MaxValue * 5) / 8))
             {
-                throw new ArgumentOutOfRangeException(nameof(value), "Input is too large to be processed.");
+                throw new ArgumentOutOfRangeException(nameof(value), "The input is too large to be processed.");
             }
 
             fixed (byte* bytesPtr = value)
@@ -249,6 +260,12 @@ namespace Neliva
         /// <para>
         /// The <paramref name="value"/> contains a non-base32 character.
         /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains non-zero trailing bits.
+        /// </para>
         /// </exception>
         public static byte[] FromBase32(ReadOnlySpan<char> value)
         {
@@ -298,6 +315,12 @@ namespace Neliva
                     bitsLeft -= 8;
                 }
             }
+
+            // Enforce canonical encoding: the trailing (padding) bits must be zero.
+            if ((buffer & ((1 << bitsLeft) - 1)) != 0)
+            {
+                throw new FormatException("The input is not a valid base32 string as it contains non-zero trailing bits.");
+            }
         }
 
         /// <summary>
@@ -314,7 +337,7 @@ namespace Neliva
         {
             Span<byte> guidBytes = stackalloc byte[16];
 
-            WriteGuidBigEndian(value, guidBytes);
+            TryWriteGuidBigEndian(value, guidBytes);
 
             return ToHex(guidBytes);
         }
@@ -334,7 +357,7 @@ namespace Neliva
         {
             Span<byte> guidBytes = stackalloc byte[16];
 
-            WriteGuidBigEndian(value, guidBytes);
+            TryWriteGuidBigEndian(value, guidBytes);
 
             return ToBase32(guidBytes);
         }
@@ -392,6 +415,12 @@ namespace Neliva
         /// <para>
         /// The <paramref name="value"/> contains a non-base32 character.
         /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains non-zero trailing bits.
+        /// </para>
         /// </exception>
         public static Guid FromBase32Guid(ReadOnlySpan<char> value)
         {
@@ -415,8 +444,8 @@ namespace Neliva
         /// The span to verify.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the span <paramref name="value"/> has
-        /// an even number of hexadecimal digits; otherwise, <c>false</c>.
+        /// <c>true</c> if the span <paramref name="value"/> has an even length and
+        /// every character is a valid hexadecimal digit; otherwise, <c>false</c>.
         /// </returns>
         /// <remarks>
         /// This method returns <c>true</c> for an empty span.
@@ -450,8 +479,8 @@ namespace Neliva
         /// The span to verify.
         /// </param>
         /// <returns>
-        /// <c>true</c> if the span <paramref name="value"/> has
-        /// correct number of base32 digits; otherwise, <c>false</c>.
+        /// <c>true</c> if the span <paramref name="value"/> has a valid length, contains only
+        /// valid base32 digits, and has zero trailing bits; otherwise, <c>false</c>.
         /// </returns>
         /// <remarks>
         /// This method returns <c>true</c> for an empty span.
@@ -483,6 +512,13 @@ namespace Neliva
                 }
             }
 
+            int trailingBits = (5 * (length % 8)) % 8;
+
+            if (trailingBits != 0 && (Base32Map[value[length - 1]] & ((1 << trailingBits) - 1)) != 0)
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -492,12 +528,10 @@ namespace Neliva
             return new Guid(value, true);
         }
 
-        private static void WriteGuidBigEndian(Guid value, Span<byte> destination)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool TryWriteGuidBigEndian(Guid value, Span<byte> destination)
         {
-            if (!value.TryWriteBytes(destination, true, out _))
-            {
-                throw new ArgumentOutOfRangeException(nameof(destination));
-            }            
+            return value.TryWriteBytes(destination, true, out _);
         }
     }
 }

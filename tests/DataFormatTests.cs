@@ -131,6 +131,23 @@ namespace Neliva.Tests
             Assert.Equal("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
         }
 
+        // Boundary: char 127 must map to invalid via the table; char 128 (== MC) and above must
+        // short-circuit on the ch >= MC guard before indexing the 128-entry map (no out-of-range read).
+        [Theory]
+        [InlineData("\u007f0")] // 127 at c1 -> table miss
+        [InlineData("0\u007f")] // 127 at c2 -> table miss
+        [InlineData("\u00800")] // 128 at c1 -> ch >= MC guard
+        [InlineData("0\u0080")] // 128 at c2 -> ch >= MC guard
+        [InlineData("\uffff0")] // max char at c1 -> ch >= MC guard
+        [InlineData("0\uffff")] // max char at c2 -> ch >= MC guard
+        public void FromHexCharMapBoundaryFails(string input)
+        {
+            Assert.False(DataFormat.IsHex(input));
+
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromHex(input));
+            Assert.Equal("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
+        }
+
         [Theory]
         [InlineData(int.MaxValue)]
         [InlineData(int.MaxValue / 2 + 1)]
@@ -187,6 +204,57 @@ namespace Neliva.Tests
         {
             var ex = Assert.Throws<FormatException>(() => DataFormat.FromHexGuid(invalidCharInHex));
             Assert.Equal("The input is not a valid hex string as it contains a non-hex character.", ex.Message);
+        }
+
+        // --- Limits & bounds: mixed-case decoding and exhaustive round trips ---
+
+        [Theory]
+        [InlineData("0aB3Cd", new byte[] { 0x0A, 0xB3, 0xCD })]
+        [InlineData("DeAdBeEf", new byte[] { 0xDE, 0xAD, 0xBE, 0xEF })]
+        public void FromHexMixedCaseDecodesCorrectly(string mixed, byte[] expected)
+        {
+            Assert.True(DataFormat.IsHex(mixed));
+            Assert.Equal(expected, DataFormat.FromHex(mixed));
+        }
+
+        [Fact]
+        public void HexRoundTripAllLengthsPass()
+        {
+            for (int length = 0; length <= 64; length++)
+            {
+                var data = new byte[length];
+                for (int i = 0; i < length; i++)
+                {
+                    data[i] = (byte)((i * 31) + (length * 7));
+                }
+
+                string hex = DataFormat.ToHex(data);
+
+                Assert.Equal(length * 2, hex.Length);
+                Assert.True(DataFormat.IsHex(hex));
+                Assert.Equal(data, DataFormat.FromHex(hex));
+            }
+        }
+
+        [Fact]
+        public void HexGuidRoundTripExhaustivePass()
+        {
+            for (int i = 0; i < 256; i++)
+            {
+                var bytes = new byte[16];
+                for (int b = 0; b < 16; b++)
+                {
+                    bytes[b] = (byte)(i + (b * 17));
+                }
+
+                var expected = new Guid(bytes);
+
+                string hex = DataFormat.ToHexGuid(expected);
+
+                Assert.Equal(32, hex.Length);
+                Assert.True(DataFormat.IsHex(hex));
+                Assert.Equal(expected, DataFormat.FromHexGuid(hex));
+            }
         }
     }
 
@@ -325,6 +393,23 @@ namespace Neliva.Tests
             Assert.Equal("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
         }
 
+        // Boundary: char 127 must map to invalid via the table; char 128 (== MC) and above must
+        // short-circuit on the ch >= MC guard before indexing the 128-entry map (no out-of-range read).
+        [Theory]
+        [InlineData("\u007f0")] // 127 at first char -> table miss
+        [InlineData("0\u007f")] // 127 at second char -> table miss
+        [InlineData("\u00800")] // 128 at first char -> ch >= MC guard
+        [InlineData("0\u0080")] // 128 at second char -> ch >= MC guard
+        [InlineData("\uffff0")] // max char at first char -> ch >= MC guard
+        [InlineData("0\uffff")] // max char at second char -> ch >= MC guard
+        public void FromBase32CharMapBoundaryFails(string input)
+        {
+            Assert.False(DataFormat.IsBase32(input));
+
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32(input));
+            Assert.Equal("The input is not a valid base32 string as it contains a non-base32 character.", ex.Message);
+        }
+
         [Theory]
         [InlineData(int.MaxValue)]
         [InlineData(((int)(((long)int.MaxValue * 5) / 8)) + 1)]
@@ -460,6 +545,168 @@ namespace Neliva.Tests
         public void IsHexValidReturnsTrue(string value)
         {
             Assert.True(DataFormat.IsHex(value));
+        }
+
+        // --- Limits & bounds: mixed/upper case, non-canonical trailing bits, exhaustive round trips ---
+
+        [Theory]
+        [InlineData("3G7wZ02V9s7Wk52AfAj597BwYw", "3g7wz02v9s7wk52afaj597bwyw")]
+        [InlineData("0123456789ABCDEFGHJKMNPQRSTVWXYZ", "0123456789abcdefghjkmnpqrstvwxyz")]
+        public void FromBase32MixedCaseDecodesAsLowercase(string mixed, string lower)
+        {
+            Assert.True(DataFormat.IsBase32(mixed));
+            Assert.Equal(DataFormat.FromBase32(lower), DataFormat.FromBase32(mixed));
+        }
+
+        // The encoder always emits zero trailing bits; the decoder rejects any input whose
+        // final character carries non-zero padding bits (non-canonical encoding).
+        [Theory]
+        [InlineData("10", new byte[] { 0x08 })]
+        [InlineData("zw", new byte[] { 0xFF })]
+        [InlineData("0g", new byte[] { 0x04 })]
+        [InlineData("0000g", new byte[] { 0x00, 0x00, 0x08 })]
+        public void FromBase32CanonicalTrailingBitsDecodes(string input, byte[] expected)
+        {
+            Assert.True(DataFormat.IsBase32(input));
+
+            var decoded = DataFormat.FromBase32(input);
+
+            Assert.Equal(expected, decoded);
+            Assert.Equal(input, DataFormat.ToBase32(decoded));
+        }
+
+        [Theory]
+        [InlineData("11")]
+        [InlineData("12")]
+        [InlineData("13")]
+        [InlineData("zz")]
+        [InlineData("zx")]
+        [InlineData("zy")]
+        [InlineData("0001")]
+        [InlineData("000h")]
+        [InlineData("00001")]
+        [InlineData("0000001")]
+        public void FromBase32NonZeroTrailingBitsThrows(string input)
+        {
+            Assert.False(DataFormat.IsBase32(input));
+
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32(input));
+            Assert.Equal("The input is not a valid base32 string as it contains non-zero trailing bits.", ex.Message);
+        }
+
+        // Exhaustive: for every length that has trailing bits, sweep all 32 possible final
+        // characters and assert only canonical (zero low-bit) endings decode; the rest throw.
+        [Theory]
+        [InlineData(2)]
+        [InlineData(4)]
+        [InlineData(5)]
+        [InlineData(7)]
+        [InlineData(10)]
+        [InlineData(12)]
+        [InlineData(13)]
+        [InlineData(15)]
+        public void FromBase32TrailingBitsAllFinalCharVariations(int length)
+        {
+            const string alphabet = "0123456789abcdefghjkmnpqrstvwxyz";
+            int trailingBits = (5 * (length % 8)) % 8;
+            int mask = (1 << trailingBits) - 1;
+
+            string prefix = new string('0', length - 1);
+
+            for (int v = 0; v < 32; v++)
+            {
+                string s = prefix + alphabet[v];
+                bool canonical = (v & mask) == 0;
+
+                Assert.Equal(canonical, DataFormat.IsBase32(s));
+
+                if (canonical)
+                {
+                    var decoded = DataFormat.FromBase32(s);
+                    Assert.Equal(s, DataFormat.ToBase32(decoded));
+                }
+                else
+                {
+                    var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32(s));
+                    Assert.Equal("The input is not a valid base32 string as it contains non-zero trailing bits.", ex.Message);
+                }
+            }
+        }
+
+        [Theory]
+        [InlineData("3G7WZ02V9S7WK52AFAJ597BWYW", "1c0fcf80-5b4e-4fc9-944a-7aa4549d7cf7")]
+        [InlineData("ZZZZZZZZZZZZZZZZZZZZZZZZZW", "ffffffff-ffff-ffff-ffff-ffffffffffff")]
+        public void FromBase32GuidUppercaseDecodesPass(string upperBase32Guid, string guidStr)
+        {
+            var expected = Guid.Parse(guidStr);
+
+            Assert.Equal(expected, DataFormat.FromBase32Guid(upperBase32Guid));
+        }
+
+        [Fact]
+        public void FromBase32GuidCanonicalTrailingBitsDecodes()
+        {
+            var allOnes = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff");
+
+            string canonical = new string('z', 25) + "w";
+
+            Assert.True(DataFormat.IsBase32(canonical));
+            Assert.Equal(allOnes, DataFormat.FromBase32Guid(canonical));
+        }
+
+        // A 26-character base32 GUID has 2 trailing bits, so any final character whose
+        // low 2 bits are set is non-canonical and must be rejected.
+        [Theory]
+        [InlineData('z')]
+        [InlineData('x')]
+        [InlineData('y')]
+        public void FromBase32GuidNonZeroTrailingBitsThrows(char lastChar)
+        {
+            string nonCanonical = new string('z', 25) + lastChar;
+
+            Assert.False(DataFormat.IsBase32(nonCanonical));
+
+            var ex = Assert.Throws<FormatException>(() => DataFormat.FromBase32Guid(nonCanonical));
+            Assert.Equal("The input is not a valid base32 string as it contains non-zero trailing bits.", ex.Message);
+        }
+
+        [Fact]
+        public void Base32RoundTripAllLengthsPass()
+        {
+            for (int length = 0; length <= 64; length++)
+            {
+                var data = new byte[length];
+                for (int i = 0; i < length; i++)
+                {
+                    data[i] = (byte)((i * 31) + (length * 7));
+                }
+
+                string b32 = DataFormat.ToBase32(data);
+
+                Assert.True(DataFormat.IsBase32(b32));
+                Assert.Equal(data, DataFormat.FromBase32(b32));
+            }
+        }
+
+        [Fact]
+        public void Base32GuidRoundTripExhaustivePass()
+        {
+            for (int i = 0; i < 256; i++)
+            {
+                var bytes = new byte[16];
+                for (int b = 0; b < 16; b++)
+                {
+                    bytes[b] = (byte)(i + (b * 17));
+                }
+
+                var expected = new Guid(bytes);
+
+                string b32 = DataFormat.ToBase32Guid(expected);
+
+                Assert.Equal(26, b32.Length);
+                Assert.True(DataFormat.IsBase32(b32));
+                Assert.Equal(expected, DataFormat.FromBase32Guid(b32));
+            }
         }
     }
 }
