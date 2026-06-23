@@ -79,7 +79,7 @@ namespace Neliva
         /// The string representation in hex of the provided span <paramref name="value"/>.
         /// If the <paramref name="value"/> span is empty then an empty string is returned.
         /// </returns>
-        /// <exception cref="ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentException">
         /// <paramref name="value"/> is too large to be encoded.
         /// </exception>
         public static unsafe string ToHex(ReadOnlySpan<byte> value)
@@ -93,7 +93,7 @@ namespace Neliva
 
             if (length > (int.MaxValue / 2))
             {
-                throw new ArgumentOutOfRangeException(nameof(value), "The input is too large to be processed.");
+                throw new ArgumentException("The input is too large to be processed.", nameof(value));
             }
 
             fixed (byte* bytesPtr = value)
@@ -125,7 +125,7 @@ namespace Neliva
         /// The string representation in base32 of the provided span <paramref name="value"/>.
         /// If the <paramref name="value"/> span is empty then an empty string is returned.
         /// </returns>
-        /// <exception cref="ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentException">
         /// <paramref name="value"/> is too large to be encoded.
         /// </exception>
         public static unsafe string ToBase32(ReadOnlySpan<byte> value)
@@ -139,7 +139,7 @@ namespace Neliva
 
             if (length > (int)(((long)int.MaxValue * 5) / 8))
             {
-                throw new ArgumentOutOfRangeException(nameof(value), "The input is too large to be processed.");
+                throw new ArgumentException("The input is too large to be processed.", nameof(value));
             }
 
             fixed (byte* bytesPtr = value)
