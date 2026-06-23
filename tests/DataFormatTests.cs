@@ -153,7 +153,7 @@ namespace Neliva.Tests
         [InlineData(int.MaxValue / 2 + 1)]
         public unsafe void ToHexInputTooLargeFail(int inputSize)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => DataFormat.ToHex(new ReadOnlySpan<byte>((void*)0, inputSize)));
+            Assert.Throws<ArgumentException>(() => DataFormat.ToHex(new ReadOnlySpan<byte>((void*)0, inputSize)));
         }
 
         [Theory]
@@ -415,7 +415,7 @@ namespace Neliva.Tests
         [InlineData(((int)(((long)int.MaxValue * 5) / 8)) + 1)]
         public unsafe void ToBase32InputTooLargeFail(int inputSize)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => DataFormat.ToBase32(new ReadOnlySpan<byte>((void*)0, inputSize)));
+            Assert.Throws<ArgumentException>(() => DataFormat.ToBase32(new ReadOnlySpan<byte>((void*)0, inputSize)));
         }
 
         [Theory]
