@@ -337,6 +337,23 @@ namespace Neliva.Tests
             Assert.Equal(string.Empty, actual);
         }
 
+        [Theory]
+        [InlineData(new byte[] { 0x66 }, "cr")]
+        [InlineData(new byte[] { 0x66, 0x6F }, "csqg")]
+        [InlineData(new byte[] { 0x66, 0x6F, 0x6F }, "csqpy")]
+        [InlineData(new byte[] { 0x66, 0x6F, 0x6F, 0x62 }, "csqpyrg")]
+        [InlineData(new byte[] { 0x66, 0x6F, 0x6F, 0x62, 0x61 }, "csqpyrk1")]
+        [InlineData(new byte[] { 0x66, 0x6F, 0x6F, 0x62, 0x61, 0x72 }, "csqpyrk1e8")]
+        public void Base32KnownTextVectorsPass(byte[] value, string expected)
+        {
+            string actual = DataFormat.ToBase32(value);
+
+            Assert.Equal(expected, actual);
+            Assert.True(DataFormat.IsBase32(actual));
+            Assert.Equal(value, DataFormat.FromBase32(actual));
+            Assert.Equal(value, DataFormat.FromBase32(actual.ToUpperInvariant()));
+        }
+
         // DSJPRTBPC4
         [Theory]
         [InlineData("D")]
