@@ -256,6 +256,42 @@ namespace Neliva.Tests
                 Assert.Equal(expected, DataFormat.FromHexGuid(hex));
             }
         }
+
+        // IsHex and FromHex use separate validation logic; this guards the contract
+        // that IsHex(value) is true exactly when FromHex(value) succeeds.
+        [Theory]
+        [InlineData("")]
+        [InlineData("00")]
+        [InlineData("6e656c697661")]
+        [InlineData("abcdefABCDEF")]
+        [InlineData("6")]
+        [InlineData("000")]
+        [InlineData("0g")]
+        [InlineData("g0")]
+        [InlineData(" 0")]
+        [InlineData("0 ")]
+        [InlineData("\u007f0")]
+        [InlineData("0\u007f")]
+        [InlineData("\u00800")]
+        [InlineData("0\u0080")]
+        [InlineData("\uffff0")]
+        public void IsHexAgreesWithFromHexOutcome(string value)
+        {
+            bool isValid = DataFormat.IsHex(value);
+
+            bool decodes;
+            try
+            {
+                DataFormat.FromHex(value);
+                decodes = true;
+            }
+            catch (FormatException)
+            {
+                decodes = false;
+            }
+
+            Assert.Equal(isValid, decodes);
+        }
     }
 
     [ExcludeFromCodeCoverage]
@@ -724,6 +760,45 @@ namespace Neliva.Tests
                 Assert.True(DataFormat.IsBase32(b32));
                 Assert.Equal(expected, DataFormat.FromBase32Guid(b32));
             }
+        }
+
+        // IsBase32 and FromBase32 use separate validation logic; this guards the contract
+        // that IsBase32(value) is true exactly when FromBase32(value) succeeds.
+        [Theory]
+        [InlineData("")]
+        [InlineData("00")]
+        [InlineData("00000")]
+        [InlineData("dsjprtbpc4")]
+        [InlineData("0123456789abcdefghjkmnpqrstvwxyz")]
+        [InlineData("D")]
+        [InlineData("DSJ")]
+        [InlineData("DSJPRT")]
+        [InlineData("ai")]
+        [InlineData("al")]
+        [InlineData("ao")]
+        [InlineData("au")]
+        [InlineData(" 0")]
+        [InlineData("11")]
+        [InlineData("zz")]
+        [InlineData("0001")]
+        [InlineData("\u00800")]
+        [InlineData("\uffff0")]
+        public void IsBase32AgreesWithFromBase32Outcome(string value)
+        {
+            bool isValid = DataFormat.IsBase32(value);
+
+            bool decodes;
+            try
+            {
+                DataFormat.FromBase32(value);
+                decodes = true;
+            }
+            catch (FormatException)
+            {
+                decodes = false;
+            }
+
+            Assert.Equal(isValid, decodes);
         }
     }
 }
