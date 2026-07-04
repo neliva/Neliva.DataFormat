@@ -102,15 +102,72 @@ namespace Neliva
                 {
                     var src = new ReadOnlySpan<byte>((byte*)args.Ptr, args.Length);
 
-                    for (int i = 0; i < args.Length; i++)
-                    {
-                        int b = src[i];
-                        int c = i << 1;
-
-                        dest[c] = (char)HexAndBase32Alphabet[b >> 4];
-                        dest[c + 1] = (char)HexAndBase32Alphabet[b & 0x0F];
-                    }
+                    ToHexCore(src, dest);
                 });
+            }
+        }
+
+        /// <summary>
+        /// Converts the span <paramref name="value"/> to its lowercase hex representation,
+        /// writing the result into <paramref name="destination"/> without allocating.
+        /// </summary>
+        /// <param name="value">
+        /// The span to convert.
+        /// </param>
+        /// <param name="destination">
+        /// The span that receives the hex characters. It must be at least
+        /// <c>value.Length * 2</c> characters long.
+        /// </param>
+        /// <returns>
+        /// The number of characters written to <paramref name="destination"/>.
+        /// If the <paramref name="value"/> span is empty then <c>0</c> is returned.
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        /// <para>
+        /// <paramref name="value"/> is too large to be encoded.
+        /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// <paramref name="destination"/> is too small to hold the converted output.
+        /// </para>
+        /// </exception>
+        public static int ToHex(ReadOnlySpan<byte> value, Span<char> destination)
+        {
+            int length = value.Length;
+
+            if (length == 0)
+            {
+                return 0;
+            }
+
+            if (length > (int.MaxValue / 2))
+            {
+                throw new ArgumentException("The input is too large to be processed.", nameof(value));
+            }
+
+            int required = length * 2;
+
+            if (destination.Length < required)
+            {
+                throw new ArgumentException("The destination is too small to hold the converted output.", nameof(destination));
+            }
+
+            ToHexCore(value, destination);
+
+            return required;
+        }
+
+        private static void ToHexCore(ReadOnlySpan<byte> value, Span<char> destination)
+        {
+            for (int i = 0; i < value.Length; i++)
+            {
+                int b = value[i];
+                int c = i << 1;
+
+                destination[c] = (char)HexAndBase32Alphabet[b >> 4];
+                destination[c + 1] = (char)HexAndBase32Alphabet[b & 0x0F];
             }
         }
 
@@ -148,35 +205,93 @@ namespace Neliva
                 {
                     var src = new ReadOnlySpan<byte>((byte*)args.Ptr, args.Length);
 
-                    int srcLen = src.Length;
-                    int buffer = src[0];
-                    int count = 0;
-                    int next = 1;
-                    int bitsLeft = 8;
-
-                    while (bitsLeft > 0 || next < srcLen)
-                    {
-                        if (bitsLeft < 5)
-                        {
-                            if (next < srcLen)
-                            {
-                                buffer = (buffer << 8) | (src[next++] & 0xff);
-                                bitsLeft += 8;
-                            }
-                            else
-                            {
-                                int pad = 5 - bitsLeft;
-                                buffer <<= pad;
-                                bitsLeft += pad;
-                            }
-                        }
-
-                        int index = 0x1f & (buffer >> (bitsLeft - 5));
-                        bitsLeft -= 5;
-
-                        dest[count++] = (char)HexAndBase32Alphabet[index];
-                    }
+                    ToBase32Core(src, dest);
                 });
+            }
+        }
+
+        /// <summary>
+        /// Converts the span <paramref name="value"/> to its lowercase base32 representation
+        /// using the <c>0123456789abcdefghjkmnpqrstvwxyz</c> alphabet, writing the result into
+        /// <paramref name="destination"/> without allocating.
+        /// </summary>
+        /// <param name="value">
+        /// The span to convert.
+        /// </param>
+        /// <param name="destination">
+        /// The span that receives the base32 characters. It must be at least
+        /// <c>(value.Length * 8 + 4) / 5</c> characters long.
+        /// </param>
+        /// <returns>
+        /// The number of characters written to <paramref name="destination"/>.
+        /// If the <paramref name="value"/> span is empty then <c>0</c> is returned.
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        /// <para>
+        /// <paramref name="value"/> is too large to be encoded.
+        /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// <paramref name="destination"/> is too small to hold the converted output.
+        /// </para>
+        /// </exception>
+        public static int ToBase32(ReadOnlySpan<byte> value, Span<char> destination)
+        {
+            int length = value.Length;
+
+            if (length == 0)
+            {
+                return 0;
+            }
+
+            if (length > (int)(((long)int.MaxValue * 5) / 8))
+            {
+                throw new ArgumentException("The input is too large to be processed.", nameof(value));
+            }
+
+            int required = (int)((((long)length * 8) + 4) / 5);
+
+            if (destination.Length < required)
+            {
+                throw new ArgumentException("The destination is too small to hold the converted output.", nameof(destination));
+            }
+
+            ToBase32Core(value, destination);
+
+            return required;
+        }
+
+        private static void ToBase32Core(ReadOnlySpan<byte> value, Span<char> destination)
+        {
+            int srcLen = value.Length;
+            int buffer = value[0];
+            int count = 0;
+            int next = 1;
+            int bitsLeft = 8;
+
+            while (bitsLeft > 0 || next < srcLen)
+            {
+                if (bitsLeft < 5)
+                {
+                    if (next < srcLen)
+                    {
+                        buffer = (buffer << 8) | (value[next++] & 0xff);
+                        bitsLeft += 8;
+                    }
+                    else
+                    {
+                        int pad = 5 - bitsLeft;
+                        buffer <<= pad;
+                        bitsLeft += pad;
+                    }
+                }
+
+                int index = 0x1f & (buffer >> (bitsLeft - 5));
+                bitsLeft -= 5;
+
+                destination[count++] = (char)HexAndBase32Alphabet[index];
             }
         }
 
@@ -218,12 +333,67 @@ namespace Neliva
 
             byte[] output = GC.AllocateUninitializedArray<byte>(length / 2);
 
-            FromHex(value, output);
+            FromHexCore(value, output);
 
             return output;
         }
 
-        private static void FromHex(ReadOnlySpan<char> value, Span<byte> destination)
+        /// <summary>
+        /// Converts the hex encoded span <paramref name="value"/> to bytes, writing the
+        /// result into <paramref name="destination"/> without allocating.
+        /// </summary>
+        /// <param name="value">
+        /// The span to convert.
+        /// </param>
+        /// <param name="destination">
+        /// The span that receives the decoded bytes. It must be at least
+        /// <c>value.Length / 2</c> bytes long.
+        /// </param>
+        /// <returns>
+        /// The number of bytes written to <paramref name="destination"/>.
+        /// If the <paramref name="value"/> span is empty then <c>0</c> is returned.
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="destination"/> is too small to hold the converted output.
+        /// </exception>
+        /// <exception cref="FormatException">
+        /// <para>
+        /// The length of <paramref name="value"/> is not a multiple of 2.
+        /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains a non-hex character.
+        /// </para>
+        /// </exception>
+        public static int FromHex(ReadOnlySpan<char> value, Span<byte> destination)
+        {
+            int length = value.Length;
+
+            if (length == 0)
+            {
+                return 0;
+            }
+
+            if ((length & 1) != 0)
+            {
+                throw new FormatException("The input is not a valid hex string as its length is not a multiple of 2.");
+            }
+
+            int required = length / 2;
+
+            if (destination.Length < required)
+            {
+                throw new ArgumentException("The destination is too small to hold the converted output.", nameof(destination));
+            }
+
+            FromHexCore(value, destination);
+
+            return required;
+        }
+
+        private static void FromHexCore(ReadOnlySpan<char> value, Span<byte> destination)
         {
             for (int i = 0; i < value.Length; i += 2)
             {
@@ -286,12 +456,76 @@ namespace Neliva
 
             byte[] output = GC.AllocateUninitializedArray<byte>((int)((long)length * 5 / 8));
 
-            FromBase32(value, output);
+            FromBase32Core(value, output);
 
             return output;
         }
 
-        private static void FromBase32(ReadOnlySpan<char> value, Span<byte> destination)
+        /// <summary>
+        /// Converts the base32 encoded span <paramref name="value"/> to bytes, writing the
+        /// result into <paramref name="destination"/> without allocating.
+        /// </summary>
+        /// <param name="value">
+        /// The span to convert.
+        /// </param>
+        /// <param name="destination">
+        /// The span that receives the decoded bytes. It must be at least
+        /// <c>value.Length * 5 / 8</c> bytes long.
+        /// </param>
+        /// <returns>
+        /// The number of bytes written to <paramref name="destination"/>.
+        /// If the <paramref name="value"/> span is empty then <c>0</c> is returned.
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="destination"/> is too small to hold the converted output.
+        /// </exception>
+        /// <exception cref="FormatException">
+        /// <para>
+        /// The length of <paramref name="value"/> is not correct.
+        /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains a non-base32 character.
+        /// </para>
+        /// <para>
+        /// OR
+        /// </para>
+        /// <para>
+        /// The <paramref name="value"/> contains non-zero trailing bits.
+        /// </para>
+        /// </exception>
+        public static int FromBase32(ReadOnlySpan<char> value, Span<byte> destination)
+        {
+            int length = value.Length;
+
+            if (length == 0)
+            {
+                return 0;
+            }
+
+            switch (length % 8)
+            {
+                case 1:
+                case 3:
+                case 6:
+                    throw new FormatException("The input is not a valid base32 string as its length is not correct.");
+            }
+
+            int required = (int)((long)length * 5 / 8);
+
+            if (destination.Length < required)
+            {
+                throw new ArgumentException("The destination is too small to hold the converted output.", nameof(destination));
+            }
+
+            FromBase32Core(value, destination);
+
+            return required;
+        }
+
+        private static void FromBase32Core(ReadOnlySpan<char> value, Span<byte> destination)
         {
             int buffer = 0;
             int bitsLeft = 0;
@@ -391,7 +625,7 @@ namespace Neliva
 
             Span<byte> guidBytes = stackalloc byte[16];
 
-            FromHex(value, guidBytes);
+            FromHexCore(value, guidBytes);
 
             return ReadGuidBigEndian(guidBytes);
         }
@@ -431,7 +665,7 @@ namespace Neliva
 
             Span<byte> guidBytes = stackalloc byte[16];
 
-            FromBase32(value, guidBytes);
+            FromBase32Core(value, guidBytes);
 
             return ReadGuidBigEndian(guidBytes);
         }

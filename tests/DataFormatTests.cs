@@ -801,4 +801,304 @@ namespace Neliva.Tests
             Assert.Equal(isValid, decodes);
         }
     }
+
+    [ExcludeFromCodeCoverage]
+    public class DataFormatSpanTests
+    {
+        // ---- ToHex(ReadOnlySpan<byte>, Span<char>) ----
+
+        [Fact]
+        public void ToHexSpanEmptyInputWritesNothingReturnsZero()
+        {
+            Span<char> destination = stackalloc char[4];
+            destination.Fill('#');
+
+            int written = DataFormat.ToHex(ReadOnlySpan<byte>.Empty, destination);
+
+            Assert.Equal(0, written);
+            Assert.Equal("####", new string(destination));
+        }
+
+        [Theory]
+        [InlineData(new byte[] { 0x00 }, "00")]
+        [InlineData(new byte[] { 0x0A, 0xB3, 0xCD }, "0ab3cd")]
+        [InlineData(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF }, "deadbeef")]
+        public void ToHexSpanWritesExpectedAndReturnsCount(byte[] value, string expected)
+        {
+            Span<char> destination = stackalloc char[expected.Length];
+
+            int written = DataFormat.ToHex(value, destination);
+
+            Assert.Equal(expected.Length, written);
+            Assert.Equal(expected, new string(destination));
+            Assert.Equal(DataFormat.ToHex(value), new string(destination));
+        }
+
+        [Fact]
+        public void ToHexSpanOversizedDestinationLeavesTailUntouched()
+        {
+            var value = new byte[] { 0x0A, 0xB3, 0xCD };
+
+            Span<char> destination = stackalloc char[10];
+            destination.Fill('#');
+
+            int written = DataFormat.ToHex(value, destination);
+
+            Assert.Equal(6, written);
+            Assert.Equal("0ab3cd", new string(destination.Slice(0, written)));
+            Assert.Equal("####", new string(destination.Slice(written)));
+        }
+
+        [Fact]
+        public void ToHexSpanDestinationTooSmallThrows()
+        {
+            var value = new byte[] { 0x01, 0x02 };
+            var destination = new char[3];
+
+            var ex = Assert.Throws<ArgumentException>(() => DataFormat.ToHex(value, destination));
+            Assert.Equal("destination", ex.ParamName);
+        }
+
+        [Fact]
+        public unsafe void ToHexSpanInputTooLargeThrows()
+        {
+            var ex = Assert.Throws<ArgumentException>(() => DataFormat.ToHex(new ReadOnlySpan<byte>((void*)0, int.MaxValue), Span<char>.Empty));
+            Assert.Equal("value", ex.ParamName);
+        }
+
+        // ---- ToBase32(ReadOnlySpan<byte>, Span<char>) ----
+
+        [Fact]
+        public void ToBase32SpanEmptyInputWritesNothingReturnsZero()
+        {
+            Span<char> destination = stackalloc char[4];
+            destination.Fill('#');
+
+            int written = DataFormat.ToBase32(ReadOnlySpan<byte>.Empty, destination);
+
+            Assert.Equal(0, written);
+            Assert.Equal("####", new string(destination));
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(5)]
+        [InlineData(16)]
+        [InlineData(17)]
+        public void ToBase32SpanMatchesStringOverload(int length)
+        {
+            var value = new byte[length];
+            for (int i = 0; i < length; i++)
+            {
+                value[i] = (byte)((i * 7) + 1);
+            }
+
+            string expected = DataFormat.ToBase32(value);
+
+            Span<char> destination = stackalloc char[expected.Length];
+
+            int written = DataFormat.ToBase32(value, destination);
+
+            Assert.Equal(expected.Length, written);
+            Assert.Equal(expected, new string(destination));
+        }
+
+        [Fact]
+        public void ToBase32SpanOversizedDestinationLeavesTailUntouched()
+        {
+            var value = new byte[] { 0x66, 0x6F, 0x6F };
+            string expected = DataFormat.ToBase32(value);
+
+            Span<char> destination = stackalloc char[10];
+            destination.Fill('#');
+
+            int written = DataFormat.ToBase32(value, destination);
+
+            Assert.Equal(expected.Length, written);
+            Assert.Equal(expected, new string(destination.Slice(0, written)));
+            Assert.Equal(new string('#', destination.Length - written), new string(destination.Slice(written)));
+        }
+
+        [Fact]
+        public void ToBase32SpanDestinationTooSmallThrows()
+        {
+            var value = new byte[] { 0x66, 0x6F, 0x6F };
+            var destination = new char[4];
+
+            var ex = Assert.Throws<ArgumentException>(() => DataFormat.ToBase32(value, destination));
+            Assert.Equal("destination", ex.ParamName);
+        }
+
+        [Fact]
+        public unsafe void ToBase32SpanInputTooLargeThrows()
+        {
+            int tooLarge = (int)(((long)int.MaxValue * 5) / 8) + 1;
+
+            var ex = Assert.Throws<ArgumentException>(() => DataFormat.ToBase32(new ReadOnlySpan<byte>((void*)0, tooLarge), Span<char>.Empty));
+            Assert.Equal("value", ex.ParamName);
+        }
+
+        // ---- FromHex(ReadOnlySpan<char>, Span<byte>) ----
+
+        [Fact]
+        public void FromHexSpanEmptyInputWritesNothingReturnsZero()
+        {
+            Span<byte> destination = stackalloc byte[4];
+
+            int written = DataFormat.FromHex(ReadOnlySpan<char>.Empty, destination);
+
+            Assert.Equal(0, written);
+        }
+
+        [Theory]
+        [InlineData("00", new byte[] { 0x00 })]
+        [InlineData("0aB3Cd", new byte[] { 0x0A, 0xB3, 0xCD })]
+        [InlineData("deadbeef", new byte[] { 0xDE, 0xAD, 0xBE, 0xEF })]
+        public void FromHexSpanWritesExpectedAndReturnsCount(string value, byte[] expected)
+        {
+            Span<byte> destination = stackalloc byte[expected.Length];
+
+            int written = DataFormat.FromHex(value, destination);
+
+            Assert.Equal(expected.Length, written);
+            Assert.Equal(expected, destination.ToArray());
+        }
+
+        [Fact]
+        public void FromHexSpanOversizedDestinationLeavesTailUntouched()
+        {
+            Span<byte> destination = stackalloc byte[8];
+            destination.Fill(0xEE);
+
+            int written = DataFormat.FromHex("deadbeef", destination);
+
+            Assert.Equal(4, written);
+            Assert.Equal(new byte[] { 0xDE, 0xAD, 0xBE, 0xEF }, destination.Slice(0, written).ToArray());
+            Assert.Equal(new byte[] { 0xEE, 0xEE, 0xEE, 0xEE }, destination.Slice(written).ToArray());
+        }
+
+        [Fact]
+        public void FromHexSpanDestinationTooSmallThrows()
+        {
+            var destination = new byte[1];
+
+            var ex = Assert.Throws<ArgumentException>(() => DataFormat.FromHex("deadbeef", destination));
+            Assert.Equal("destination", ex.ParamName);
+        }
+
+        [Fact]
+        public void FromHexSpanOddLengthThrows()
+        {
+            var destination = new byte[4];
+
+            Assert.Throws<FormatException>(() => DataFormat.FromHex("abc", destination));
+        }
+
+        [Fact]
+        public void FromHexSpanInvalidCharThrows()
+        {
+            var destination = new byte[1];
+
+            Assert.Throws<FormatException>(() => DataFormat.FromHex("0g", destination));
+        }
+
+        // ---- FromBase32(ReadOnlySpan<char>, Span<byte>) ----
+
+        [Fact]
+        public void FromBase32SpanEmptyInputWritesNothingReturnsZero()
+        {
+            Span<byte> destination = stackalloc byte[4];
+
+            int written = DataFormat.FromBase32(ReadOnlySpan<char>.Empty, destination);
+
+            Assert.Equal(0, written);
+        }
+
+        [Theory]
+        [InlineData("cr", new byte[] { 0x66 })]
+        [InlineData("00000", new byte[] { 0x00, 0x00, 0x00 })]
+        public void FromBase32SpanWritesExpectedAndReturnsCount(string value, byte[] expected)
+        {
+            Span<byte> destination = stackalloc byte[expected.Length];
+
+            int written = DataFormat.FromBase32(value, destination);
+
+            Assert.Equal(expected.Length, written);
+            Assert.Equal(expected, destination.ToArray());
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(7)]
+        [InlineData(16)]
+        [InlineData(17)]
+        public void FromBase32SpanMatchesByteArrayOverload(int length)
+        {
+            var data = new byte[length];
+            for (int i = 0; i < length; i++)
+            {
+                data[i] = (byte)((i * 7) + 1);
+            }
+
+            string encoded = DataFormat.ToBase32(data);
+
+            Span<byte> destination = stackalloc byte[length];
+
+            int written = DataFormat.FromBase32(encoded, destination);
+
+            Assert.Equal(length, written);
+            Assert.Equal(data, destination.ToArray());
+        }
+
+        [Fact]
+        public void FromBase32SpanOversizedDestinationLeavesTailUntouched()
+        {
+            Span<byte> destination = stackalloc byte[8];
+            destination.Fill(0xEE);
+
+            int written = DataFormat.FromBase32("00000", destination);
+
+            Assert.Equal(3, written);
+            Assert.Equal(new byte[] { 0x00, 0x00, 0x00 }, destination.Slice(0, written).ToArray());
+            Assert.Equal(new byte[] { 0xEE, 0xEE, 0xEE, 0xEE, 0xEE }, destination.Slice(written).ToArray());
+        }
+
+        [Fact]
+        public void FromBase32SpanDestinationTooSmallThrows()
+        {
+            var destination = new byte[2];
+
+            var ex = Assert.Throws<ArgumentException>(() => DataFormat.FromBase32("00000", destination));
+            Assert.Equal("destination", ex.ParamName);
+        }
+
+        [Theory]
+        [InlineData("D")]
+        [InlineData("DSJ")]
+        [InlineData("DSJPRT")]
+        public void FromBase32SpanInvalidLengthThrows(string value)
+        {
+            var destination = new byte[16];
+
+            Assert.Throws<FormatException>(() => DataFormat.FromBase32(value, destination));
+        }
+
+        [Fact]
+        public void FromBase32SpanInvalidCharThrows()
+        {
+            var destination = new byte[1];
+
+            Assert.Throws<FormatException>(() => DataFormat.FromBase32("ai", destination));
+        }
+
+        [Fact]
+        public void FromBase32SpanNonZeroTrailingBitsThrows()
+        {
+            var destination = new byte[1];
+
+            Assert.Throws<FormatException>(() => DataFormat.FromBase32("11", destination));
+        }
+    }
 }
