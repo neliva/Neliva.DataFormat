@@ -577,6 +577,31 @@ namespace Neliva
         }
 
         /// <summary>
+        /// Converts the <paramref name="value"/> to its lowercase hex representation,
+        /// writing the result into <paramref name="destination"/> without allocating.
+        /// </summary>
+        /// <param name="value">
+        /// The <see cref="Guid"/> to convert.
+        /// </param>
+        /// <param name="destination">
+        /// The span that receives the hex characters. It must be at least 32 characters long.
+        /// </param>
+        /// <returns>
+        /// The number of characters written to <paramref name="destination"/>, which is always 32.
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="destination"/> is too small to hold the converted output.
+        /// </exception>
+        public static int ToHexGuid(Guid value, Span<char> destination)
+        {
+            Span<byte> guidBytes = stackalloc byte[16];
+
+            TryWriteGuidBigEndian(value, guidBytes);
+
+            return ToHex(guidBytes, destination);
+        }
+
+        /// <summary>
         /// Converts the <paramref name="value"/> to lowercase base32 representation
         /// using the <c>0123456789abcdefghjkmnpqrstvwxyz</c> alphabet.
         /// </summary>
@@ -594,6 +619,32 @@ namespace Neliva
             TryWriteGuidBigEndian(value, guidBytes);
 
             return ToBase32(guidBytes);
+        }
+
+        /// <summary>
+        /// Converts the <paramref name="value"/> to its lowercase base32 representation
+        /// using the <c>0123456789abcdefghjkmnpqrstvwxyz</c> alphabet, writing the result
+        /// into <paramref name="destination"/> without allocating.
+        /// </summary>
+        /// <param name="value">
+        /// The <see cref="Guid"/> to convert.
+        /// </param>
+        /// <param name="destination">
+        /// The span that receives the base32 characters. It must be at least 26 characters long.
+        /// </param>
+        /// <returns>
+        /// The number of characters written to <paramref name="destination"/>, which is always 26.
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="destination"/> is too small to hold the converted output.
+        /// </exception>
+        public static int ToBase32Guid(Guid value, Span<char> destination)
+        {
+            Span<byte> guidBytes = stackalloc byte[16];
+
+            TryWriteGuidBigEndian(value, guidBytes);
+
+            return ToBase32(guidBytes, destination);
         }
 
         /// <summary>

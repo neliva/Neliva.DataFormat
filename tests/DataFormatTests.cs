@@ -1100,5 +1100,142 @@ namespace Neliva.Tests
 
             Assert.Throws<FormatException>(() => DataFormat.FromBase32("11", destination));
         }
+
+        // ---- ToHexGuid(Guid, Span<char>) ----
+
+        [Theory]
+        [InlineData("00000000-0000-0000-0000-000000000000", "00000000000000000000000000000000")]
+        [InlineData("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF", "ffffffffffffffffffffffffffffffff")]
+        [InlineData("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7", "1c0fcf805b4e4fc9944a7aa4549d7cf7")]
+        public void ToHexGuidSpanWritesExpectedAndReturnsCount(string guidStr, string expected)
+        {
+            var value = Guid.Parse(guidStr);
+
+            Span<char> destination = stackalloc char[32];
+
+            int written = DataFormat.ToHexGuid(value, destination);
+
+            Assert.Equal(32, written);
+            Assert.Equal(expected, new string(destination));
+            Assert.Equal(value.ToString("N"), expected);
+            Assert.Equal(DataFormat.ToHexGuid(value), new string(destination));
+            Assert.Equal(value, DataFormat.FromHexGuid(destination));
+        }
+
+        [Fact]
+        public void ToHexGuidSpanOversizedDestinationLeavesTailUntouched()
+        {
+            var value = Guid.Parse("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7");
+
+            Span<char> destination = stackalloc char[36];
+            destination.Fill('#');
+
+            int written = DataFormat.ToHexGuid(value, destination);
+
+            Assert.Equal(32, written);
+            Assert.Equal(value.ToString("N"), new string(destination.Slice(0, written)));
+            Assert.Equal("####", new string(destination.Slice(written)));
+        }
+
+        [Fact]
+        public void ToHexGuidSpanDestinationTooSmallThrows()
+        {
+            var value = Guid.Parse("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7");
+            var destination = new char[31];
+
+            var ex = Assert.Throws<ArgumentException>(() => DataFormat.ToHexGuid(value, destination));
+            Assert.Equal("destination", ex.ParamName);
+        }
+
+        [Fact]
+        public void ToHexGuidSpanRoundTripExhaustivePass()
+        {
+            Span<char> destination = stackalloc char[32];
+
+            for (int i = 0; i < 256; i++)
+            {
+                var bytes = new byte[16];
+                for (int b = 0; b < 16; b++)
+                {
+                    bytes[b] = (byte)(i + (b * 17));
+                }
+
+                var expected = new Guid(bytes);
+
+                int written = DataFormat.ToHexGuid(expected, destination);
+
+                Assert.Equal(32, written);
+                Assert.Equal(DataFormat.ToHexGuid(expected), new string(destination));
+                Assert.Equal(expected, DataFormat.FromHexGuid(destination));
+            }
+        }
+
+        // ---- ToBase32Guid(Guid, Span<char>) ----
+
+        [Theory]
+        [InlineData("00000000-0000-0000-0000-000000000000", "00000000000000000000000000")]
+        [InlineData("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF", "zzzzzzzzzzzzzzzzzzzzzzzzzw")]
+        [InlineData("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7", "3g7wz02v9s7wk52afaj597bwyw")]
+        public void ToBase32GuidSpanWritesExpectedAndReturnsCount(string guidStr, string expected)
+        {
+            var value = Guid.Parse(guidStr);
+
+            Span<char> destination = stackalloc char[26];
+
+            int written = DataFormat.ToBase32Guid(value, destination);
+
+            Assert.Equal(26, written);
+            Assert.Equal(expected, new string(destination));
+            Assert.Equal(DataFormat.ToBase32Guid(value), new string(destination));
+            Assert.Equal(value, DataFormat.FromBase32Guid(destination));
+        }
+
+        [Fact]
+        public void ToBase32GuidSpanOversizedDestinationLeavesTailUntouched()
+        {
+            var value = Guid.Parse("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7");
+
+            Span<char> destination = stackalloc char[30];
+            destination.Fill('#');
+
+            int written = DataFormat.ToBase32Guid(value, destination);
+
+            Assert.Equal(26, written);
+            Assert.Equal("3g7wz02v9s7wk52afaj597bwyw", new string(destination.Slice(0, written)));
+            Assert.Equal("####", new string(destination.Slice(written)));
+        }
+
+        [Fact]
+        public void ToBase32GuidSpanDestinationTooSmallThrows()
+        {
+            var value = Guid.Parse("1C0FCF80-5B4E-4FC9-944A-7AA4549D7CF7");
+            var destination = new char[25];
+
+            var ex = Assert.Throws<ArgumentException>(() => DataFormat.ToBase32Guid(value, destination));
+            Assert.Equal("destination", ex.ParamName);
+        }
+
+        [Fact]
+        public void ToBase32GuidSpanRoundTripExhaustivePass()
+        {
+            Span<char> destination = stackalloc char[26];
+
+            for (int i = 0; i < 256; i++)
+            {
+                var bytes = new byte[16];
+                for (int b = 0; b < 16; b++)
+                {
+                    bytes[b] = (byte)(i + (b * 17));
+                }
+
+                var expected = new Guid(bytes);
+
+                int written = DataFormat.ToBase32Guid(expected, destination);
+
+                Assert.Equal(26, written);
+                Assert.Equal(DataFormat.ToBase32Guid(expected), new string(destination));
+                Assert.Equal(expected, DataFormat.FromBase32Guid(destination));
+            }
+        }
     }
 }
